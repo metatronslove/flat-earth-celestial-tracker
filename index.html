@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Düz Dünya Göksel Takip Sistemi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-hijri/2.1.2/moment-hijri.min.js"></script>
+    <style>
+        :root {
+            --primary: #4fc3f7;
+            --secondary: #9c27b0;
+            --accent: #ffb300;
+            --background: #0c0f2d;
+            --card-bg: rgba(13, 19, 33, 0.9);
+            --text: #e0f7fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background), #1a1c45, #2a1b5e);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            background: rgba(12, 15, 45, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, var(--accent), #ff9800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(255, 179, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .model-explanation {
+            background: rgba(25, 30, 70, 0.7);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 25px auto;
+            max-width: 900px;
+            font-size: 1.05rem;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1100px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            backdrop-filter: blur(8px);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .output-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(156, 39, 176, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .section-title {
+            font-size: 1.7rem;
+            margin-bottom: 25px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+        }
+
+        .section-title i {
+            font-size: 1.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.15rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #3949ab;
+            background: rgba(25, 35, 70, 0.7);
+            color: var(--text);
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.4);
+            background: rgba(35, 45, 90, 0.7);
+        }
+
+        .date-type-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .date-type-btn {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            background: rgba(57, 73, 171, 0.4);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .date-type-btn.active {
+            background: rgba(79, 195, 247, 0.3);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 12px rgba(79, 195, 247, 0.3);
+        }
+
+        .location-selector {
+            display: flex;
+            gap: 12px;
+        }
+
+        .location-selector select {
+            flex: 1;
+        }
+
+        .time-slider-container {
+            margin: 35px 0;
+            background: rgba(25, 35, 70, 0.7);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(156, 39, 176, 0.4);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .time-slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .time-slider {
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, #1a237e, #4a148c, #6a1b9a);
+            border-radius: 10px;
+            outline: none;
+            box-shadow: 0 0 12px rgba(156, 39, 176, 0.4);
+        }
+
+        .time-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 179, 0, 0.9);
+            border: 3px solid #ff9800;
+            transition: transform 0.2s;
+        }
+
+        .time-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .day-night-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            font-size: 1.15rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .day-segment, .night-segment {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .segment-label {
+            font-size: 1.05rem;
+            opacity: 0.85;
+        }
+
+        .segment-value {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 1.4rem;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .celestial-display {
+            position: relative;
+            height: 500px;
+            background: radial-gradient(circle at center, #1a237e 0%, #0c0f2d 85%);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 30px 0;
+            border: 1px solid rgba(79, 195, 247, 0.4);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
+        }
+
+        .horizon-line {
+            position: absolute;
+            bottom: 30%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, var(--primary), transparent);
+            box-shadow: 0 0 15px rgba(129, 212, 250, 0.7);
+        }
+
+        .compass {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--primary);
+            font-size: 1.3rem;
+            text-shadow: 0 0 8px rgba(129, 212, 250, 0.9);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(129, 212, 250, 0.3);
+        }
+
+        .flat-earth-model {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .celestial-body {
+            position: absolute;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px currentColor;
+            z-index: 10;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .celestial-body:hover {
+            transform: translate(-50%, -50%) scale(1.4);
+            z-index: 20;
+            box-shadow: 0 0 30px currentColor;
+        }
+
+        .celestial-info {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            min-width: 220px;
+            z-index: 30;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            line-height: 1.7;
+        }
+
+        .celestial-info strong {
+            color: var(--primary);
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .celestial-body:hover .celestial-info {
+            opacity: 1;
+        }
+
+        .celestial-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .celestial-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .celestial-tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            background: rgba(79, 195, 247, 0.1);
+        }
+
+        .celestial-table-container {
+            overflow-x: auto;
+        }
+
+        .celestial-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            min-width: 800px;
+        }
+
+        .celestial-table th {
+            background: rgba(79, 195, 247, 0.3);
+            padding: 16px;
+            text-align: left;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .celestial-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .celestial-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .celestial-table tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .celestial-table tr:hover {
+            background: rgba(79, 195, 247, 0.2);
+        }
+
+        .celestial-table .lilith-row {
+            background: rgba(156, 39, 176, 0.2);
+        }
+
+        .celestial-table .lilith-row:hover {
+            background: rgba(156, 39, 176, 0.3);
+        }
+
+        .celestial-table .fixed-star-row {
+            background: rgba(255, 179, 0, 0.1);
+        }
+
+        .celestial-table .fixed-star-row:hover {
+            background: rgba(255, 179, 0, 0.2);
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), #29b6f6);
+            color: #0c1445;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, var(--secondary), #7b1fa2);
+            color: #e1bee7;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(-2px);
+        }
+
+        .btn i {
+            font-size: 1.3rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            background: rgba(13, 19, 33, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 4s infinite;
+        }
+
+        .constellation {
+            position: absolute;
+            height: 2px;
+            background: rgba(79, 195, 247, 0.6);
+            transform-origin: 0 0;
+            z-index: 1;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .zodiac-sign {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            z-index: 2;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: var(--primary);
+            font-size: 1.5rem;
+            gap: 20px;
+        }
+
+        .loading-spinner {
+            border: 5px solid rgba(79, 195, 247, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-circle"></i> Düz Dünya Geocentric Göksel Takip Sistemi</h1>
+            <p class="subtitle">Küresel koordinatlar, düz dünya modeli ve İslami okült bilgiler ışığında gök cisimlerinin konumlarını hesaplayan gelişmiş astrolojik araç</p>
+
+            <div class="model-explanation">
+                <i class="fas fa-info-circle"></i> <strong>Sistem Bilgisi:</strong> Bu araç, dünya merkezli (geocentric) düz dünya modeline göre tasarlanmıştır. Tüm hesaplamalar gök cisimlerinin dünya üzerindeki kubbe içinde hareket ettiği varsayımıyla yapılmaktadır.
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title"><i class="fas fa-globe-asia"></i> Konum ve Zaman</h2>
+
+                <div class="input-group">
+                    <label for="latitude"><i class="fas fa-location-dot"></i> Enlem (Latitude)</label>
+                    <input type="text" id="latitude" value="41.0082" placeholder="Ör: 41.0082">
+                </div>
+
+                <div class="input-group">
+                    <label for="longitude"><i class="fas fa-location-dot"></i> Boylam (Longitude)</label>
+                    <input type="text" id="longitude" value="28.9784" placeholder="Ör: 28.9784">
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-calendar"></i> Takvim Sistemi</label>
+                    <div class="date-type-selector">
+                        <div class="date-type-btn active" id="gregorian-btn">Miladi Takvim</div>
+                        <div class="date-type-btn" id="hijri-btn">Hicri Takvim</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="date"><i class="fas fa-calendar-days"></i> Tarih</label>
+                    <input type="date" id="date" value="2023-10-15">
+                </div>
+
+                <div class="input-group">
+                    <label for="time"><i class="fas fa-clock"></i> Saat (24 saat formatında)</label>
+                    <input type="time" id="time" value="21:30">
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" id="calculate-btn">
+                        <i class="fas fa-calculator"></i> Gök Cisimlerini Hesapla
+                    </button>
+                    <button class="btn btn-secondary" id="reset-btn">
+                        <i class="fas fa-redo"></i> Varsayılanlara Dön
+                    </button>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title"><i class="fas fa-stars"></i> Göksel Konumlar ve Analizler</h2>
+
+                <div class="time-slider-container">
+                    <div class="time-slider-header">
+                        <span><i class="fas fa-sliders"></i> Gün İçi Zaman Kaydırıcı</span>
+                        <span id="current-time-display">21:30</span>
+                    </div>
+                    <input type="range" min="0" max="86400" value="77400" class="time-slider" id="time-slider">
+
+                    <div class="day-night-indicator">
+                        <div class="day-segment">
+                            <span class="segment-label">Gündüz Dilimi</span>
+                            <span class="segment-value">-</span>
+                        </div>
+                        <div class="night-segment">
+                            <span class="segment-label">Gece Dilimi</span>
+                            <span class="segment-value">4. Dilim</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="celestial-display" id="celestial-display">
+                    <div class="horizon-line"></div>
+                    <div class="compass">Kuzey ↑</div>
+                    <div class="flat-earth-model">Düz Dünya Modeli - Geocentric Sistem</div>
+                    <!-- Celestial bodies will be added here dynamically -->
+                </div>
+
+<table class="celestial-table">
+    <thead>
+        <tr>
+            <th>Gök Cismi</th>
+            <th>Durum</th>
+            <th>Yükseklik</th>
+            <th>Açı</th>
+            <th>Doğuş</th>
+            <th>Batış</th>
+        </tr>
+    </thead>
+    <tbody id="celestial-data">
+        <!-- Script ile dolduracağız -->
+    </tbody>
+</table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Bu proje, düz dünya (geocentric) modeli temelinde gök cisimlerinin konumlarını hesaplamak için geliştirilmiştir | Kubbe altında güneş, ay ve yıldızlar modeli kullanılmaktadır</p>
+            <p>© 2023 Geocentric Celestial Tracker | İslami Okült Çalışmalar ve Astroloji için Geliştirilmiştir</p>
+        </div>
+    </div>
+
+    <script>
+        // Şehir verileri
+        const cities = [
+            {name: "İstanbul", lat: 41.0082, lon: 28.9784},
+            {name: "Ankara", lat: 39.9334, lon: 32.8597},
+            {name: "İzmir", lat: 38.4237, lon: 27.1428},
+            {name: "Bursa", lat: 40.1826, lon: 29.0669},
+            {name: "Adana", lat: 37.0000, lon: 35.3213},
+            {name: "Gaziantep", lat: 37.0660, lon: 37.3781},
+            {name: "Konya", lat: 37.8714, lon: 32.4846},
+            {name: "Antalya", lat: 36.8969, lon: 30.7133},
+            {name: "Diyarbakır", lat: 37.9100, lon: 40.2306},
+            {name: "Mersin", lat: 36.8000, lon: 34.6333},
+            {name: "Kayseri", lat: 38.7333, lon: 35.4833},
+            {name: "Eskişehir", lat: 39.7767, lon: 30.5206},
+            {name: "Samsun", lat: 41.2867, lon: 36.33},
+            {name: "Denizli", lat: 37.7833, lon: 29.1000},
+            {name: "Şanlıurfa", lat: 37.1674, lon: 38.7959},
+            {name: "Malatya", lat: 38.3554, lon: 38.3337},
+            {name: "Kahramanmaraş", lat: 37.5833, lon: 36.9333},
+            {name: "Erzurum", lat: 39.9000, lon: 41.2700},
+            {name: "Van", lat: 38.4942, lon: 43.3800},
+            {name: "Batman", lat: 37.8833, lon: 41.1333},
+            {name: "Elazığ", lat: 38.6667, lon: 39.2167},
+            {name: "Sivas", lat: 39.7500, lon: 37.0167},
+            {name: "Trabzon", lat: 41.0015, lon: 39.7178},
+            {name: "Manisa", lat: 38.6333, lon: 27.4167},
+            {name: "Balıkesir", lat: 39.6500, lon: 27.8833},
+            {name: "Adıyaman", lat: 37.7194, lon: 38.3111},
+            {name: "Aydın", lat: 37.8500, lon: 27.8500},
+            {name: "Muğla", lat: 37.2167, lon: 28.3667},
+            {name: "Tekirdağ", lat: 40.9833, lon: 27.5167},
+            {name: "Çanakkale", lat: 40.1553, lon: 26.4142},
+            {name: "Edirne", lat: 41.6667, lon: 26.5667},
+            {name: "Kırklareli", lat: 41.7333, lon: 27.2167},
+            {name: "Isparta", lat: 37.7667, lon: 30.5500},
+            {name: "Burdur", lat: 37.7167, lon: 30.2833},
+            {name: "Afyonkarahisar", lat: 38.7500, lon: 30.5500},
+            {name: "Uşak", lat: 38.6833, lon: 29.4000},
+            {name: "Niğde", lat: 37.9667, lon: 34.6833},
+            {name: "Nevşehir", lat: 38.6333, lon: 34.7167},
+            {name: "Kırşehir", lat: 39.1500, lon: 34.1667},
+            {name: "Aksaray", lat: 38.3667, lon: 34.0333},
+            {name: "Kırıkkale", lat: 39.8500, lon: 33.5167},
+            {name: "Çankırı", lat: 40.6000, lon: 33.6167},
+            {name: "Karabük", lat: 41.2000, lon: 32.6333},
+            {name: "Zonguldak", lat: 41.4500, lon: 31.7833},
+            {name: "Bolu", lat: 40.7333, lon: 31.6000},
+            {name: "Düzce", lat: 40.8333, lon: 31.1667},
+            {name: "Sakarya", lat: 40.7833, lon: 30.4000},
+            {name: "Yalova", lat: 40.6500, lon: 29.2667},
+            {name: "Bilecik", lat: 40.1500, lon: 29.9833},
+            {name: "Rize", lat: 41.0208, lon: 40.5219},
+            {name: "Artvin", lat: 41.1833, lon: 41.8167},
+            {name: "Giresun", lat: 40.9167, lon: 38.4000},
+            {name: "Gümüşhane", lat: 40.4667, lon: 39.4833},
+            {name: "Ordu", lat: 40.9833, lon: 37.8833},
+            {name: "Sinop", lat: 42.0267, lon: 35.1556},
+            {name: "Kastamonu", lat: 41.3833, lon: 33.7833},
+            {name: "Çorum", lat: 40.5500, lon: 34.9500},
+            {name: "Amasya", lat: 40.6500, lon: 35.8333},
+            {name: "Tokat", lat: 40.3167, lon: 36.5500},
+            {name: "Sivas", lat: 39.7500, lon: 37.0167},
+            {name: "Yozgat", lat: 39.8167, lon: 34.8000},
+            {name: "Kayseri", lat: 38.7333, lon: 35.4833},
+            {name: "Osmaniye", lat: 37.0750, lon: 36.2500},
+            {name: "Hatay", lat: 36.2000, lon: 36.1667},
+            {name: "K.Maraş", lat: 37.5833, lon: 36.9333},
+            {name: "Mardin", lat: 37.3167, lon: 40.7333},
+            {name: "Şırnak", lat: 37.5167, lon: 42.4500},
+            {name: "Siirt", lat: 37.9333, lon: 41.9500},
+            {name: "Hakkari", lat: 37.5833, lon: 43.7333},
+            {name: "Bitlis", lat: 38.4000, lon: 42.1000},
+            {name: "Muş", lat: 38.7333, lon: 41.4833},
+            {name: "Bingöl", lat: 38.8833, lon: 40.5000},
+            {name: "Tunceli", lat: 39.1000, lon: 39.5500},
+            {name: "Erzincan", lat: 39.7500, lon: 39.5000},
+            {name: "Erzurum", lat: 39.9000, lon: 41.2700},
+            {name: "Ardahan", lat: 41.1167, lon: 42.7000},
+            {name: "Kars", lat: 40.6000, lon: 43.1000},
+            {name: "Iğdır", lat: 39.9167, lon: 44.0333},
+            {name: "Ağrı", lat: 39.7167, lon: 43.0500},
+            {name: "New York", lat: 40.7128, lon: -74.0060},
+            {name: "Londra", lat: 51.5074, lon: -0.1278},
+            {name: "Paris", lat: 48.8566, lon: 2.3522},
+            {name: "Tokyo", lat: 35.6762, lon: 139.6503},
+            {name: "Pekin", lat: 39.9042, lon: 116.4074},
+            {name: "Moskova", lat: 55.7558, lon: 37.6173},
+            {name: "Yeni Delhi", lat: 28.6139, lon: 77.2090},
+            {name: "Kahire", lat: 30.0444, lon: 31.2357},
+            {name: "Riyad", lat: 24.7136, lon: 46.6753},
+            {name: "Dubai", lat: 25.2048, lon: 55.2708},
+            {name: "İslamabad", lat: 33.6844, lon: 73.0479},
+            {name: "Bakü", lat: 40.4093, lon: 49.8671},
+            {name: "Tahran", lat: 35.6892, lon: 51.3890},
+            {name: "Kudüs", lat: 31.7683, lon: 35.2137}
+        ];
+
+        // Gök cisimleri verileri
+        const celestialBodies = [
+            {id: 'sun', name: 'Güneş (Şems)', color: '#FFB300', size: 40, symbol: 'sun', type: 'star'},
+            {id: 'moon', name: 'Ay (Kamer)', color: '#E0E0E0', size: 30, symbol: 'moon', type: 'star'},
+            {id: 'lilith', name: 'Lilith (Kara Ay)', color: '#9C27B0', size: 15, symbol: 'moon', type: 'star'},
+            {id: 'mercury', name: 'Merkür (Utarid)', color: '#4FC3F7', size: 12, symbol: 'star', type: 'planet'},
+            {id: 'venus', name: 'Venüs (Zühre)', color: '#FF9800', size: 18, symbol: 'star', type: 'planet'},
+            {id: 'mars', name: 'Mars (Merih)', color: '#F44336', size: 16, symbol: 'star', type: 'planet'},
+            {id: 'jupiter', name: 'Jüpiter (Müşteri)', color: '#795548', size: 25, symbol: 'star', type: 'planet'},
+            {id: 'saturn', name: 'Satürn (Zühal)', color: '#FFC107', size: 22, symbol: 'star', type: 'planet'},
+            {id: 'uranus', name: 'Uranus (Osmanlı döneminde bilinmiyordu)', color: '#4CAF50', size: 20, symbol: 'star', type: 'planet'},
+            {id: 'neptune', name: 'Neptün (Osmanlı döneminde bilinmiyordu)', color: '#2196F3', size: 20, symbol: 'star', type: 'planet'},
+            {id: 'aldebaran', name: 'Aldebaran (Dübbü\'l-Esgar)', color: '#FF5722', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'regulus', name: 'Regulus (Kalbu\'l-Esed)', color: '#3F51B5', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'spica', name: 'Spica (Sünbüle)', color: '#4DB6AC', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'antares', name: 'Antares (Kalbu\'l-Akrep)', color: '#E91E63', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'sirius', name: 'Sirius (Şi\'ra)', color: '#00BCD4', size: 10, symbol: 'star', type: 'fixed-star'},
+            {id: 'polaris', name: 'Polaris (Kutup Yıldızı)', color: '#9E9E9E', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'vega', name: 'Vega (Vega / Nesrü\'l-Vaki)', color: '#8BC34A', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'rigel', name: 'Rigel (Riclü\'l-Cevze)', color: '#03A9F4', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'betelgeuse', name: 'Betelgeuse (Mankibü\'l-Cevze)', color: '#FF5252', size: 9, symbol: 'star', type: 'fixed-star'},
+            {id: 'canopus', name: 'Canopus (Suhayl)', color: '#FFD740', size: 9, symbol: 'star', type: 'fixed-star'},
+            {id: 'arcturus', name: 'Arcturus (Simakü\'l-Ramih)', color: '#FF6D00', size: 8, symbol: 'star', type: 'fixed-star'},
+            {id: 'capella', name: 'Capella (Ayyuk)', color: '#FFEA00', size: 8, symbol: 'star', type: 'fixed-star'}
+        ];
+
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            // Şehir seçimini doldur
+            const citySelect = document.createElement('select');
+            citySelect.id = 'city-select';
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = `${city.lat},${city.lon}`;
+                option.textContent = city.name;
+                citySelect.appendChild(option);
+            });
+
+            // Eski şehir input'unu değiştir
+            const cityInputGroup = document.querySelector('label[for="latitude"]').parentNode;
+            const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude');
+            cityInputGroup.innerHTML = '';
+            cityInputGroup.appendChild(document.createElement('label')).textContent = 'Şehir Seçin';
+            cityInputGroup.appendChild(citySelect);
+
+            // Şehir seçildiğinde koordinatları güncelle
+            citySelect.addEventListener('change', function() {
+                const [lat, lon] = this.value.split(',');
+                latInput.value = lat;
+                lonInput.value = lon;
+            });
+
+            // Gök cisimlerini oluştur
+            createCelestialBodies();
+            createStars();
+
+            // Zaman kaydırıcı etkileşimi
+            document.getElementById('time-slider').addEventListener('input', updateCelestialPositions);
+
+            // Hesapla butonu
+            document.getElementById('calculate-btn').addEventListener('click', calculatePositions);
+
+            // Takvim tipi değiştirme
+            document.getElementById('gregorian-btn').addEventListener('click', function() {
+                this.classList.add('active');
+                document.getElementById('hijri-btn').classList.remove('active');
+                document.getElementById('date').type = 'date';
+            });
+
+            document.getElementById('hijri-btn').addEventListener('click', function() {
+                this.classList.add('active');
+                document.getElementById('gregorian-btn').classList.remove('active');
+                document.getElementById('date').type = 'text';
+                document.getElementById('date').placeholder = 'Hicri tarih (Ör: 1445-03-01)';
+            });
+        });
+
+        // Yıldızları oluştur
+        function createStars() {
+            const container = document.getElementById('celestial-display');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 50 + 10}%`;
+                star.style.width = `${Math.random() * 2 + 0.5}px`;
+                star.style.height = star.style.width;
+                star.style.opacity = Math.random() * 0.7 + 0.3;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(star);
+            }
+        }
+
+        // Gök cisimlerini oluştur
+        function createCelestialBodies() {
+            const container = document.getElementById('celestial-display');
+            celestialBodies.forEach(body => {
+                const element = document.createElement('div');
+                element.id = body.id;
+                element.className = 'celestial-body';
+                element.style.width = `${body.size}px`;
+                element.style.height = `${body.size}px`;
+                element.style.background = body.color;
+                element.style.boxShadow = `0 0 20px ${body.color}`;
+
+                // Bilgi tooltip'i
+                const info = document.createElement('div');
+                info.className = 'celestial-info';
+                info.innerHTML = `<strong>${body.name}</strong><br>Yükseklik: 0°<br>Açı: 0°`;
+                element.appendChild(info);
+
+                container.appendChild(element);
+            });
+        }
+
+        // Gök cisimlerinin pozisyonlarını güncelle
+        function updateCelestialPositions() {
+            const slider = document.getElementById('time-slider');
+            const totalSeconds = parseInt(slider.value);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+            // Saati güncelle
+            document.getElementById('current-time-display').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            document.getElementById('time').value =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+            // Gündüz/gece dilimlerini güncelle
+            updateDayNightSegments(hours, minutes);
+
+            // Gök cisimlerini hareket ettir
+            celestialBodies.forEach(body => {
+                const element = document.getElementById(body.id);
+                if (element) {
+                    // Basit bir simülasyon - gerçek hesaplamalar için astronomi kütüphaneleri kullanılmalı
+                    const timeFactor = totalSeconds / 86400;
+                    const altitude = 5 + 55 * Math.sin(timeFactor * Math.PI * 2 + body.size);
+                    const azimuth = (timeFactor * 360 + body.size * 10) % 360;
+
+                    // Pozisyonu güncelle
+                    const x = 50 + (azimuth - 180) * 0.2;
+                    const y = 70 - altitude * 0.7;
+                    element.style.left = `${x}%`;
+                    element.style.top = `${y}%`;
+
+                    // Bilgiyi güncelle
+                    const info = element.querySelector('.celestial-info');
+                    info.innerHTML = `<strong>${body.name}</strong><br>Yükseklik: ${altitude.toFixed(1)}°<br>Açı: ${azimuth.toFixed(1)}°`;
+
+                    // Görünürlük durumu
+                    const status = altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+                    info.innerHTML += `<br>Durum: ${status}`;
+                }
+            });
+        }
+
+        // Gündüz/gece dilimlerini güncelle
+        function updateDayNightSegments(hours, minutes) {
+            const daySegment = document.querySelector('.day-segment .segment-value');
+            const nightSegment = document.querySelector('.night-segment .segment-value');
+
+            if (hours >= 6 && hours < 18) {
+                // Gündüz dilimi (6:00 - 18:00 arası)
+                const segment = Math.floor(((hours - 6) * 60 + minutes) / 60) + 1;
+                daySegment.textContent = `${segment}. Dilim`;
+                nightSegment.textContent = '-';
+            } else {
+                // Gece dilimi
+                daySegment.textContent = '-';
+                let hour = hours;
+                if (hour < 6) hour += 24; // Gece yarısından sonrası için
+                const segment = Math.floor(((hour - 18) * 60 + minutes) / 60) + 1;
+                nightSegment.textContent = `${segment}. Dilim`;
+            }
+        }
+
+        // Konum ve zaman bilgilerine göre hesapla
+        function calculatePositions() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lon = parseFloat(document.getElementById('longitude').value);
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            // Tabloyu güncelle
+            updateCelestialTable();
+
+            // Gök cisimlerinin pozisyonlarını güncelle
+            updateCelestialPositions();
+
+            console.log(`Hesaplama yapılıyor: Enlem ${lat}, Boylam ${lon}, Tarih ${date}, Saat ${time}`);
+        }
+
+        // Gök cisimleri tablosunu güncelle
+function initializeCelestialTable() {
+    const tableBody = document.getElementById('celestial-data');
+    tableBody.innerHTML = ''; // Önce temizle
+
+    celestialBodies.forEach(body => {
+        const row = document.createElement('tr');
+
+        // Satır stilleri
+        if (body.id === 'lilith') {
+            row.className = 'lilith-row';
+        } else if (body.type === 'planet') {
+            row.className = 'planet-row';
+        } else if (body.type === 'fixed-star') {
+            row.className = 'fixed-star-row';
+        }
+
+        // Hücreleri oluştur
+        row.innerHTML = `
+            <td><i class="fas fa-${body.symbol}" style="color: ${body.color}"></i> ${body.name}</td>
+            <td class="status">-</td>
+            <td class="altitude">-</td>
+            <td class="azimuth">-</td>
+            <td class="rise-time">-</td>
+            <td class="set-time">-</td>
+        `;
+
+        // Data attribute ile gök cismi ID'sini sakla
+        row.dataset.bodyId = body.id;
+        tableBody.appendChild(row);
+    });
+}
+
+// Tablo verilerini güncelleyen fonksiyon
+function updateCelestialTable() {
+    celestialBodies.forEach(body => {
+        const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
+        if (!row) return;
+
+        // Simüle edilmiş veriler (gerçek uygulamada astronomik hesaplamalar yapılmalı)
+        const altitude = (Math.random() * 60 - 10).toFixed(1);
+        const azimuth = (Math.random() * 360).toFixed(1);
+        const status = parseFloat(altitude) > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+        const riseTime = `${Math.floor(Math.random() * 4 + 5)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`;
+        const setTime = `${Math.floor(Math.random() * 4 + 18)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`;
+
+        // Hücreleri güncelle
+        row.querySelector('.status').textContent = status;
+        row.querySelector('.altitude').textContent = `${altitude}°`;
+        row.querySelector('.azimuth').textContent = `${azimuth}°`;
+        row.querySelector('.rise-time').textContent = riseTime;
+        row.querySelector('.set-time').textContent = setTime;
+    });
+}
+
+        // CSS'e planet-row sınıfını ekleyelim
+        const style = document.createElement('style');
+        style.textContent = `
+            .celestial-table .planet-row {
+                background: rgba(76, 175, 80, 0.1);
+            }
+            .celestial-table .planet-row:hover {
+                background: rgba(76, 175, 80, 0.2);
+            }
+        `;
+        document.head.appendChild(style);
+
+// Sayfa yüklendiğinde tabloyu oluştur ve güncelle
+document.addEventListener('DOMContentLoaded', () => {
+    initializeCelestialTable();
+    updateCelestialTable();
+
+    // Zaman kaydırıcı değiştiğinde güncelle
+    document.getElementById('time-slider').addEventListener('input', () => {
+        updateCelestialTable();
+    });
+});
+    </script>
+</body>
+</html>
