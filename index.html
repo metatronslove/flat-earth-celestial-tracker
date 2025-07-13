@@ -850,28 +850,40 @@
             document.getElementById('time-slider').addEventListener('input', () => this.updateTimeFromSlider());
         },
 
-        calculatePosition(bodyId, date, time, lat, lon) {
-            try {
-                const body = bodyId === 'sun' ? Astronomy.Body.Sun :
-                             bodyId === 'moon' ? Astronomy.Body.Moon : null;
-                if (!body) return null;
+		calculatePosition(bodyId, date, time, lat, lon) {
+			try {
+				const body = bodyId === 'sun' ? Astronomy.Body.Sun :
+                     bodyId === 'moon' ? Astronomy.Body.Moon : null;
+				if (!body) return null;
 
-                const datetime = new Date(`${date}T${time}Z`);
-                const observer = new Astronomy.Observer(lat, lon, 0);
-                const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
-                const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
+				const datetime = new Date(`${date}T${time}Z`);
+				const observer = new Astronomy.Observer(lat, lon, 0);
+				const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
+				const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
-                return {
-                    altitude,
-                    azimuth,
-                    rise: this.formatTime(Astronomy.SearchRiseSet(body, observer, +1, datetime, 300)),
-                    set: this.formatTime(Astronomy.SearchRiseSet(body, observer, -1, datetime, 300))
-                };
-            } catch (e) {
-                console.error(`Hesaplama hatası (${bodyId}):`, e);
-                return null;
-            }
-        },
+				// Basitleştirilmiş rise/set hesaplaması
+				const formatTime = (ut) => {
+					if (!ut || isNaN(ut)) return '-';
+					const d = new Date(ut * 1000); // Astronomy Engine'in döndürdüğü Unix zaman damgası
+					return d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+				};
+
+				return {
+					altitude,
+					azimuth,
+					rise: formatTime(Astronomy.SearchRiseSet(body, observer, +1, datetime, 300)),
+					set: formatTime(Astronomy.SearchRiseSet(body, observer, -1, datetime, 300))
+				};
+			} catch (e) {
+				console.error(`Hesaplama hatası (${bodyId}):`, e);
+				return {
+					altitude: 0,
+					azimuth: 0,
+					rise: '-',
+					set: '-'
+				};
+			}
+		},
 
 		formatTime(date) {
 			if (!date || typeof date.toLocaleTimeString !== 'function') {
