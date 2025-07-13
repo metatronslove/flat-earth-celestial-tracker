@@ -791,11 +791,13 @@
     // Uygulama ana yapısı
     const CelestialTracker = {
         init() {
-            this.initCityDropdown();
-            this.setCurrentDateTime();
-            this.setCurrentLocation();
-            this.bindEvents();
-            this.updateAll();
+			this.initCityDropdown();
+			this.setCurrentDateTime();
+			this.setCurrentLocation();
+			this.bindEvents();
+			this.createCelestialTable(); // Tablo satırlarını hazırla
+			createCelestialBodies();     // Gökyüzü görselleştirmeleri
+			this.updateAll();            // Tüm verileri getir
         },
 
         initCityDropdown() {
@@ -850,6 +852,35 @@
             document.getElementById('calculate-btn').addEventListener('click', () => this.updateAll());
             document.getElementById('time-slider').addEventListener('input', () => this.updateTimeFromSlider());
         },
+
+        createCelestialTable() {
+    const tableBody = document.getElementById('celestial-data');
+    tableBody.innerHTML = '';
+
+    celestialBodies.forEach(body => {
+        const row = document.createElement('tr');
+        if (body.id === 'lilith') {
+            row.className = 'lilith-row';
+        } else if (body.type === 'planet') {
+            row.className = 'planet-row';
+        } else if (body.type === 'fixed-star') {
+            row.className = 'fixed-star-row';
+        }
+
+        row.setAttribute('data-body-id', body.id); // ⚠️ ÖNEMLİ
+
+        row.innerHTML = `
+            <td><i class="fas fa-${body.symbol}" style="color: ${body.color}"></i> ${body.name}</td>
+            <td class="status">-</td>
+            <td class="altitude">-</td>
+            <td class="azimuth">-</td>
+            <td class="rise-time">-</td>
+            <td class="set-time">-</td>
+        `;
+        tableBody.appendChild(row);
+    });
+},
+
 
 // Astronomy Engine ile desteklenen tüm gök cisimleri
 const astronomyBodies = {
@@ -1020,15 +1051,12 @@ calculateFixedStarPosition(bodyId, datetime, observer) {
     };
 
     // Sayfa yüklendiğinde
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            CelestialTracker.initCityDropdown();
-            createStars();
-            createCelestialBodies();
-            initializeCelestialTable();
-            CelestialTracker.init(); // Doğrudan başlat
-        }, 100);
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        createStars(); // Arka plan yıldızları
+        CelestialTracker.init(); // Tüm sistemi başlat
+    }, 100);
+});
 
 // Orijinal fonksiyonlarınız (değişmeden kalacak)
 function createStars() {
@@ -1080,34 +1108,6 @@ function updateDayNightSegments(hours, minutes) {
         const segment = Math.floor(((hour - 18) * 60 + minutes) / 60) + 1;
         nightSegment.textContent = `${segment}. Dilim`;
     }
-}
-
-function initializeCelestialTable() {
-    const tableBody = document.getElementById('celestial-data');
-    tableBody.innerHTML = '';
-
-    celestialBodies.forEach(body => {
-        const row = document.createElement('tr');
-        if (body.id === 'lilith') {
-            row.className = 'lilith-row';
-        } else if (body.type === 'planet') {
-            row.className = 'planet-row';
-        } else if (body.type === 'fixed-star') {
-            row.className = 'fixed-star-row';
-        }
-
-        row.innerHTML = `
-            <td><i class="fas fa-${body.symbol}" style="color: ${body.color}"></i> ${body.name}</td>
-            <td class="status">-</td>
-            <td class="altitude">-</td>
-            <td class="azimuth">-</td>
-            <td class="rise-time">-</td>
-            <td class="set-time">-</td>
-        `;
-
-        row.dataset.bodyId = body.id;
-        tableBody.appendChild(row);
-    });
 }
     </script>
 </body>
