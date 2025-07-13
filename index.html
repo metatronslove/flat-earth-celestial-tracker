@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Düz Dünya Göksel Takip Sistemi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://metatronslove.github.io/flat-earth-celestial-tracker/astronomy.browser.min.js"></script>
+    <script src="https://metatronslove.github.io/flat-earth-celestial-tracker/Astronomy.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-hijri/2.1.2/moment-hijri.min.js"></script>
     <style>
@@ -852,20 +852,20 @@
 
         calculatePosition(bodyId, date, time, lat, lon) {
             try {
-                const body = bodyId === 'sun' ? astronomy.Body.Sun :
-                             bodyId === 'moon' ? astronomy.Body.Moon : null;
+                const body = bodyId === 'sun' ? Astronomy.Body.Sun :
+                             bodyId === 'moon' ? Astronomy.Body.Moon : null;
                 if (!body) return null;
 
                 const datetime = new Date(`${date}T${time}Z`);
-                const observer = new astronomy.Observer(lat, lon, 0);
-                const {ra, dec} = astronomy.Equator(body, datetime, observer, true, true);
-                const {altitude, azimuth} = astronomy.Horizon(datetime, observer, ra, dec, 'normal');
+                const observer = new Astronomy.Observer(lat, lon, 0);
+                const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
+                const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
                 return {
                     altitude,
                     azimuth,
-                    rise: this.formatTime(astronomy.SearchRiseSet(body, observer, +1, datetime, 300)),
-                    set: this.formatTime(astronomy.SearchRiseSet(body, observer, -1, datetime, 300))
+                    rise: this.formatTime(Astronomy.SearchRiseSet(body, observer, +1, datetime, 300)),
+                    set: this.formatTime(Astronomy.SearchRiseSet(body, observer, -1, datetime, 300))
                 };
             } catch (e) {
                 console.error(`Hesaplama hatası (${bodyId}):`, e);
