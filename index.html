@@ -873,9 +873,12 @@
             }
         },
 
-        formatTime(date) {
-            return date?.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}) || '-';
-        },
+		formatTime(date) {
+			if (!date || typeof date.toLocaleTimeString !== 'function') {
+				return '-';
+			}
+			return date.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+		},
 
         updateTimeFromSlider() {
             const slider = document.getElementById('time-slider');
