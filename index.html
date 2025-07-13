@@ -781,228 +781,238 @@
             {id: 'capella', name: 'Capella (Ayyuk)', color: '#FFEA00', size: 8, symbol: 'star', type: 'fixed-star'}
         ];
 
-    // Astronomy Engine kontrolü
-    function initWhenReady() {
-        if (window.astronomy) {
-            initializeApplication();
-        } else {
-            setTimeout(initWhenReady, 100);
-        }
+// Astronomy Engine kontrolü
+function initWhenReady() {
+    if (window.astronomy) {
+        initializeApplication();
+    } else {
+        setTimeout(initWhenReady, 100);
     }
+}
 
-    // Uygulama ana yapısı
-    const CelestialTracker = {
-        config: {
-            cities: [ /* ORİJİNAL ŞEHİR LİSTENİZ */ ],
-            bodies: [ /* ORİJİNAL GÖK CİSİMLERİ LİSTENİZ */ ]
-        },
+// Uygulama ana yapısı
+const CelestialTracker = {
+    init() {
+        this.initCityDropdown();
+        this.setCurrentDateTime();
+        this.setCurrentLocation();
+        this.bindEvents();
+        this.updateAll();
+    },
 
-        init() {
-            this.setupUI();
-            this.setCurrentLocation();
-            this.bindEvents();
-            this.updateAll();
-        },
+    initCityDropdown() {
+        const citySelect = document.getElementById('city-select');
+        citySelect.innerHTML = cities.map(city =>
+            `<option value="${city.lat},${city.lon}">${city.name}</option>`
+        ).join('');
+    },
 
-        setupUI() {
-            // Şehir dropdown'ını doldur
-            const citySelect = document.getElementById('city-select');
-            citySelect.innerHTML = this.config.cities.map(city =>
-                `<option value="${city.lat},${city.lon}">${city.name}</option>`
-            ).join('');
+    setCurrentDateTime() {
+        const now = new Date();
+        document.getElementById('date').value = now.toISOString().split('T')[0];
+        document.getElementById('time').value =
+            `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        document.getElementById('time-slider').value = now.getHours() * 3600 + now.getMinutes() * 60;
+    },
 
-            // Mevcut zamanı ayarla
-            const now = new Date();
-            document.getElementById('date').value = now.toISOString().split('T')[0];
-            document.getElementById('time').value =
-                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        },
-
-        setCurrentLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const lat = position.coords.latitude.toFixed(4);
-                        const lon = position.coords.longitude.toFixed(4);
-                        document.getElementById('latitude').value = lat;
-                        document.getElementById('longitude').value = lon;
-                    },
-                    () => {
-                        // Varsayılan olarak İstanbul
-                        document.getElementById('latitude').value = "41.0082";
-                        document.getElementById('longitude').value = "28.9784";
-                    }
-                );
-            }
-        },
-
-        bindEvents() {
-            document.getElementById('city-select').addEventListener('change', (e) => {
-                const [lat, lon] = e.target.value.split(',');
-                document.getElementById('latitude').value = lat;
-                document.getElementById('longitude').value = lon;
-                this.updateAll();
-            });
-
-            document.getElementById('calculate-btn').addEventListener('click', () => this.updateAll());
-            document.getElementById('time-slider').addEventListener('input', () => this.updateTimeFromSlider());
-        },
-
-        calculatePosition(bodyId, date, time, lat, lon) {
-            try {
-                const bodyMap = {
-                    'sun': astronomy.Body.Sun,
-                    'moon': astronomy.Body.Moon
-                };
-
-                if (!bodyMap[bodyId]) return null;
-
-                const datetime = new Date(`${date}T${time}Z`);
-                const observer = new astronomy.Observer(lat, lon, 0);
-                const { ra, dec } = astronomy.Equator(bodyMap[bodyId], datetime, observer, true, true);
-                const { altitude, azimuth } = astronomy.Horizon(datetime, observer, ra, dec, 'normal');
-
-                return {
-                    altitude,
-                    azimuth,
-                    rise: this.formatTime(astronomy.SearchRiseSet(bodyMap[bodyId], observer, +1, datetime, 300)),
-                    set: this.formatTime(astronomy.SearchRiseSet(bodyMap[bodyId], observer, -1, datetime, 300))
-                };
-            } catch (e) {
-                console.error(`Hesaplama hatası (${bodyId}):`, e);
-                return null;
-            }
-        },
-
-        formatTime(date) {
-            return date?.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}) || '-';
-        },
-
-        updateTimeFromSlider() {
-            const slider = document.getElementById('time-slider');
-            const totalSeconds = parseInt(slider.value);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-            document.getElementById('time').value = timeStr;
-            document.getElementById('current-time-display').textContent = timeStr;
-            this.updateCelestialPositions();
-        },
-
-        updateCelestialTable() {
-            const date = document.getElementById('date').value;
-            const time = document.getElementById('time').value;
-            const lat = parseFloat(document.getElementById('latitude').value);
-            const lon = parseFloat(document.getElementById('longitude').value);
-
-            this.config.bodies.forEach(body => {
-                const pos = this.calculatePosition(body.id, date, time, lat, lon);
-                if (!pos) return;
-
-                const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
-                if (row) {
-                    row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
-                    row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
-                    row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
-                    row.querySelector('.rise-time').textContent = pos.rise;
-                    row.querySelector('.set-time').textContent = pos.set;
+    setCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const lat = position.coords.latitude.toFixed(4);
+                    const lon = position.coords.longitude.toFixed(4);
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lon;
+                },
+                () => {
+                    // Varsayılan olarak İstanbul
+                    document.getElementById('latitude').value = "41.0082";
+                    document.getElementById('longitude').value = "28.9784";
                 }
-            });
-        },
-
-        updateCelestialPositions() {
-            // Görsel güncellemeler burada yapılacak
-            // (Orijinal createCelestialBodies fonksiyonunuzla entegre edilebilir)
-        },
-
-        updateAll() {
-            this.updateCelestialTable();
-            this.updateCelestialPositions();
+            );
         }
-    };
+    },
 
-    // Sayfa yüklendiğinde
-    document.addEventListener('DOMContentLoaded', () => {
-        initWhenReady();
-    });
+    bindEvents() {
+        document.getElementById('city-select').addEventListener('change', (e) => {
+            const [lat, lon] = e.target.value.split(',');
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lon;
+            this.updateAll();
+        });
 
-    function initializeApplication() {
-        CelestialTracker.init();
+        document.getElementById('calculate-btn').addEventListener('click', () => this.updateAll());
+        document.getElementById('time-slider').addEventListener('input', () => this.updateTimeFromSlider());
+    },
 
-        // Orijinal fonksiyonlarınızı çağırın
-        createStars();
-        createCelestialBodies();
-        initializeCelestialTable();
+    calculatePosition(bodyId, date, time, lat, lon) {
+        try {
+            const body = bodyId === 'sun' ? astronomy.Body.Sun :
+                         bodyId === 'moon' ? astronomy.Body.Moon : null;
+            if (!body) return null;
+
+            const datetime = new Date(`${date}T${time}Z`);
+            const observer = new astronomy.Observer(lat, lon, 0);
+            const {ra, dec} = astronomy.Equator(body, datetime, observer, true, true);
+            const {altitude, azimuth} = astronomy.Horizon(datetime, observer, ra, dec, 'normal');
+
+            return {
+                altitude,
+                azimuth,
+                rise: this.formatTime(astronomy.SearchRiseSet(body, observer, +1, datetime, 300)),
+                set: this.formatTime(astronomy.SearchRiseSet(body, observer, -1, datetime, 300))
+            };
+        } catch (e) {
+            console.error(`Hesaplama hatası (${bodyId}):`, e);
+            return null;
+        }
+    },
+
+    formatTime(date) {
+        return date?.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}) || '-';
+    },
+
+    updateTimeFromSlider() {
+        const slider = document.getElementById('time-slider');
+        const totalSeconds = parseInt(slider.value);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+        document.getElementById('time').value = timeStr;
+        document.getElementById('current-time-display').textContent = timeStr;
+        this.updateCelestialPositions();
+    },
+
+    updateCelestialTable() {
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lon = parseFloat(document.getElementById('longitude').value);
+
+        celestialBodies.forEach(body => {
+            const pos = this.calculatePosition(body.id, date, time, lat, lon);
+            if (!pos) return;
+
+            const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
+            if (row) {
+                row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+                row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
+                row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
+                row.querySelector('.rise-time').textContent = pos.rise;
+                row.querySelector('.set-time').textContent = pos.set;
+            }
+        });
+    },
+
+    updateCelestialPositions() {
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lon = parseFloat(document.getElementById('longitude').value);
+
+        celestialBodies.forEach(body => {
+            const element = document.getElementById(body.id);
+            if (!element) return;
+
+            const pos = this.calculatePosition(body.id, date, time, lat, lon);
+            if (!pos) return;
+
+            const x = 50 + (pos.azimuth - 180) * 0.2;
+            const y = 70 - pos.altitude * 0.7;
+            element.style.left = `${Math.max(0, Math.min(100, x))}%`;
+            element.style.top = `${Math.max(0, Math.min(100, y))}%`;
+
+            const info = element.querySelector('.celestial-info');
+            if (info) {
+                info.innerHTML = `<strong>${body.name}</strong><br>Yükseklik: ${pos.altitude.toFixed(1)}°<br>Açı: ${pos.azimuth.toFixed(1)}°`;
+            }
+        });
+
+        const hours = parseInt(document.getElementById('time').value.split(':')[0]);
+        const minutes = parseInt(document.getElementById('time').value.split(':')[1]);
+        updateDayNightSegments(hours, minutes);
+    },
+
+    updateAll() {
+        this.updateCelestialTable();
+        this.updateCelestialPositions();
     }
+};
 
-        // Yıldızları oluştur
-        function createStars() {
-            const container = document.getElementById('celestial-display');
-            for (let i = 0; i < 200; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 50 + 10}%`;
-                star.style.width = `${Math.random() * 2 + 0.5}px`;
-                star.style.height = star.style.width;
-                star.style.opacity = Math.random() * 0.7 + 0.3;
-                star.style.animationDelay = `${Math.random() * 5}s`;
-                container.appendChild(star);
-            }
-        }
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', () => {
+    // Önce yıldızları ve gök cisimlerini oluştur
+    createStars();
+    createCelestialBodies();
+    initializeCelestialTable();
 
-        // Gök cisimlerini oluştur
-        function createCelestialBodies() {
-            const container = document.getElementById('celestial-display');
-            celestialBodies.forEach(body => {
-                const element = document.createElement('div');
-                element.id = body.id;
-                element.className = 'celestial-body';
-                element.style.width = `${body.size}px`;
-                element.style.height = `${body.size}px`;
-                element.style.background = body.color;
-                element.style.boxShadow = `0 0 20px ${body.color}`;
+    // Astronomy Engine yüklendikten sonra uygulamayı başlat
+    initWhenReady();
+});
 
-                // Bilgi tooltip'i
-                const info = document.createElement('div');
-                info.className = 'celestial-info';
-                info.innerHTML = `<strong>${body.name}</strong><br>Yükseklik: 0°<br>Açı: 0°`;
-                element.appendChild(info);
+function initializeApplication() {
+    CelestialTracker.init();
+}
 
-                container.appendChild(element);
-            });
-        }
+// Orijinal fonksiyonlarınız (değişmeden kalacak)
+function createStars() {
+    const container = document.getElementById('celestial-display');
+    for (let i = 0; i < 200; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 50 + 10}%`;
+        star.style.width = `${Math.random() * 2 + 0.5}px`;
+        star.style.height = star.style.width;
+        star.style.opacity = Math.random() * 0.7 + 0.3;
+        star.style.animationDelay = `${Math.random() * 5}s`;
+        container.appendChild(star);
+    }
+}
 
-        // Gündüz/gece dilimlerini güncelle
-        function updateDayNightSegments(hours, minutes) {
-            const daySegment = document.querySelector('.day-segment .segment-value');
-            const nightSegment = document.querySelector('.night-segment .segment-value');
+function createCelestialBodies() {
+    const container = document.getElementById('celestial-display');
+    celestialBodies.forEach(body => {
+        const element = document.createElement('div');
+        element.id = body.id;
+        element.className = 'celestial-body';
+        element.style.width = `${body.size}px`;
+        element.style.height = `${body.size}px`;
+        element.style.background = body.color;
+        element.style.boxShadow = `0 0 20px ${body.color}`;
 
-            if (hours >= 6 && hours < 18) {
-                // Gündüz dilimi (6:00 - 18:00 arası)
-                const segment = Math.floor(((hours - 6) * 60 + minutes) / 60) + 1;
-                daySegment.textContent = `${segment}. Dilim`;
-                nightSegment.textContent = '-';
-            } else {
-                // Gece dilimi
-                daySegment.textContent = '-';
-                let hour = hours;
-                if (hour < 6) hour += 24; // Gece yarısından sonrası için
-                const segment = Math.floor(((hour - 18) * 60 + minutes) / 60) + 1;
-                nightSegment.textContent = `${segment}. Dilim`;
-            }
-        }
+        const info = document.createElement('div');
+        info.className = 'celestial-info';
+        info.innerHTML = `<strong>${body.name}</strong><br>Yükseklik: 0°<br>Açı: 0°`;
+        element.appendChild(info);
 
-        // Gök cisimleri tablosunu güncelle
+        container.appendChild(element);
+    });
+}
+
+function updateDayNightSegments(hours, minutes) {
+    const daySegment = document.querySelector('.day-segment .segment-value');
+    const nightSegment = document.querySelector('.night-segment .segment-value');
+
+    if (hours >= 6 && hours < 18) {
+        const segment = Math.floor(((hours - 6) * 60 + minutes) / 60) + 1;
+        daySegment.textContent = `${segment}. Dilim`;
+        nightSegment.textContent = '-';
+    } else {
+        daySegment.textContent = '-';
+        let hour = hours < 6 ? hours + 24 : hours;
+        const segment = Math.floor(((hour - 18) * 60 + minutes) / 60) + 1;
+        nightSegment.textContent = `${segment}. Dilim`;
+    }
+}
+
 function initializeCelestialTable() {
     const tableBody = document.getElementById('celestial-data');
-    tableBody.innerHTML = ''; // Önce temizle
+    tableBody.innerHTML = '';
 
     celestialBodies.forEach(body => {
         const row = document.createElement('tr');
-
-        // Satır stilleri
         if (body.id === 'lilith') {
             row.className = 'lilith-row';
         } else if (body.type === 'planet') {
@@ -1011,7 +1021,6 @@ function initializeCelestialTable() {
             row.className = 'fixed-star-row';
         }
 
-        // Hücreleri oluştur
         row.innerHTML = `
             <td><i class="fas fa-${body.symbol}" style="color: ${body.color}"></i> ${body.name}</td>
             <td class="status">-</td>
@@ -1021,7 +1030,6 @@ function initializeCelestialTable() {
             <td class="set-time">-</td>
         `;
 
-        // Data attribute ile gök cismi ID'sini sakla
         row.dataset.bodyId = body.id;
         tableBody.appendChild(row);
     });
