@@ -576,6 +576,7 @@
     <input type="text" id="longitude" value="28.9784" placeholder="Ör: 28.9784">
 </div>
 
+<!-- Şehir seçim dropdown'ını buraya ekleyin -->
 <div class="input-group">
     <label><i class="fas fa-city"></i> Şehir Seçin</label>
     <select id="city-select"></select>
@@ -807,9 +808,19 @@ const CelestialTracker = {
 
     initCityDropdown() {
         const citySelect = document.getElementById('city-select');
-        citySelect.innerHTML = cities.map(city =>
-            `<option value="${city.lat},${city.lon}">${city.name}</option>`
-        ).join('');
+        if (!citySelect) {
+            console.error("city-select elementi bulunamadı!");
+            return;
+        }
+
+        // Dropdown'ı temizle ve yeni seçenekleri ekle
+        citySelect.innerHTML = '';
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = `${city.lat},${city.lon}`;
+            option.textContent = city.name;
+            citySelect.appendChild(option);
+        });
     },
 
     setCurrentDateTime() {
@@ -947,13 +958,19 @@ const CelestialTracker = {
 
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
-    // Önce yıldızları ve gök cisimlerini oluştur
-    createStars();
-    createCelestialBodies();
-    initializeCelestialTable();
+    // Önce HTML elementlerinin yüklendiğinden emin ol
+    setTimeout(() => {
+        // Şehir dropdown'ını başlat
+        CelestialTracker.initCityDropdown();
 
-    // Astronomy Engine yüklendikten sonra uygulamayı başlat
-    initWhenReady();
+        // Diğer başlatma işlemleri
+        createStars();
+        createCelestialBodies();
+        initializeCelestialTable();
+
+        // Astronomy Engine yüklendikten sonra uygulamayı başlat
+        initWhenReady();
+    }, 100);
 });
 
 function initializeApplication() {
