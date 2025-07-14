@@ -1136,6 +1136,7 @@
                 document.getElementById('time').value = timeStr;
                 document.getElementById('current-time-display').textContent = timeStr;
                 this.updateCelestialPositions();
+                this.updateDayNightSegments(); // YENİ ÇAĞRI
             },
 
             updateCelestialPositions() {
