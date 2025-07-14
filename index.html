@@ -1064,8 +1064,8 @@
                     const observer = new Astronomy.Observer(lat, lon, 0);
 
                     // 1. GÜN DOĞUMU ve BATIMI HESAPLA
-                    const sunrise = Astronomy.SearchRiseSet('Sun', observer, +1, datetime, 300);
-                    const sunset = Astronomy.SearchRiseSet('Sun', observer, -1, datetime, 300);
+                    const sunrise = this.calculateRiseSet('Sun', observer, datetime, +1);
+                    const sunset = this.calculateRiseSet('Sun', observer, datetime, -1);
 
                     if (!sunrise || !sunset) {
                         console.error("Güneş olayları hesaplanamadı");
@@ -1136,7 +1136,6 @@
                 document.getElementById('time').value = timeStr;
                 document.getElementById('current-time-display').textContent = timeStr;
                 this.updateCelestialPositions();
-                this.updateDayNightSegments(); // YENİ ÇAĞRI
             },
 
             updateCelestialPositions() {
