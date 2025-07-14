@@ -919,86 +919,86 @@
                 });
             },
 
-		calculatePosition(bodyId, date, time, lat, lon) {
-    		try {
-        		const datetime = new Date(`${date}T${time}Z`);
-        		const observer = new Astronomy.Observer(lat, lon, 0);
+			calculatePosition(bodyId, date, time, lat, lon) {
+				try {
+					const datetime = new Date(`${date}T${time}Z`);
+					const observer = new Astronomy.Observer(lat, lon, 0);
 
-        		// 1. Astronomy Engine ile doğrudan desteklenen cisimler
-        		if (astronomyBodies[bodyId]) {
-            		const body = astronomyBodies[bodyId];
-            		const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
-            		const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
+					// 1. Astronomy Engine ile doğrudan desteklenen cisimler
+					if (astronomyBodies[bodyId]) {
+						const body = astronomyBodies[bodyId];
+						const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
+						const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
-            		// Ay için ekstra bilgiler
-            		let moonInfo = {};
-            		if (bodyId === 'moon') {
-                		const phase = getMoonPhase(datetime);
-                		moonInfo = {
-                    		phase: phase.name,
-                    		phaseIcon: phase.icon,
-                    		phaseValue: phase.value
-                		};
-            		}
+						// Ay için ekstra bilgiler
+						let moonInfo = {};
+						if (bodyId === 'moon') {
+							const phase = getMoonPhase(datetime);
+							moonInfo = {
+								phase: phase.name,
+								phaseIcon: phase.icon,
+								phaseValue: phase.value
+							};
+						}
 
-            		return {
-                		altitude,
-                		azimuth,
-                		rise: this.calculateRiseSet(body, observer, datetime, +1),
-                		set: this.calculateRiseSet(body, observer, datetime, -1),
-                		distance: Astronomy.AstrometricDistance(body, datetime),
-                		...moonInfo
-            		};
-        		}
-        		// 2. Sabit yıldızlar için
-        		else {
-            		const star = fixedStars.find(s => s.id === bodyId);
-            		if (star) {
-                		const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, star.ra, star.dec, 'normal');
-                		return {
-                    		altitude,
-                    		azimuth,
-                    		rise: '-', // Sabit yıldızlar için farklı hesaplama gerekir
-                    		set: '-',
-                    		distance: null
-                		};
-            		}
-        		}
+						return {
+							altitude,
+							azimuth,
+							rise: this.calculateRiseSet(body, observer, datetime, +1),
+							set: this.calculateRiseSet(body, observer, datetime, -1),
+							distance: Astronomy.AstrometricDistance(body, datetime),
+							...moonInfo
+						};
+					}
+					// 2. Sabit yıldızlar için
+					else {
+						const star = fixedStars.find(s => s.id === bodyId);
+						if (star) {
+							const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, star.ra, star.dec, 'normal');
+							return {
+								altitude,
+								azimuth,
+								rise: '-', // Sabit yıldızlar için farklı hesaplama gerekir
+								set: '-',
+								distance: null
+							};
+						}
+					}
 
-        		return null;
-    		} catch (e) {
-        		console.error(`Hesaplama hatası (${bodyId}):`, e);
-        		return null;
-    		}
-		},
+					return null;
+				} catch (e) {
+					console.error(`Hesaplama hatası (${bodyId}):`, e);
+					return null;
+				}
+			},
 
-		// Tabloyu güncelleme fonksiyonu
-		updateCelestialTable() {
-    		const date = document.getElementById('date').value;
-    		const time = document.getElementById('time').value;
-    		const lat = parseFloat(document.getElementById('latitude').value);
-    		const lon = parseFloat(document.getElementById('longitude').value);
+			// Tabloyu güncelleme fonksiyonu
+			updateCelestialTable() {
+				const date = document.getElementById('date').value;
+				const time = document.getElementById('time').value;
+				const lat = parseFloat(document.getElementById('latitude').value);
+				const lon = parseFloat(document.getElementById('longitude').value);
 
-    		celestialBodies.forEach(body => {
-        		const pos = this.calculatePosition(body.id, date, time, lat, lon);
-        		if (!pos) return;
+				celestialBodies.forEach(body => {
+					const pos = this.calculatePosition(body.id, date, time, lat, lon);
+					if (!pos) return;
 
-        		const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
-        		if (row) {
-            		row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
-            		row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
-            		row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
-            		row.querySelector('.rise-time').textContent = pos.rise;
-            		row.querySelector('.set-time').textContent = pos.set;
+					const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
+					if (row) {
+						row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+						row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
+						row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
+						row.querySelector('.rise-time').textContent = pos.rise;
+						row.querySelector('.set-time').textContent = pos.set;
 
-            		// Ay için evre bilgisi
-            		if (body.id === 'moon' && pos.phase) {
-                		row.querySelector('.phase').innerHTML =
-                    		`<i class="fas fa-${pos.phaseIcon}"></i> ${pos.phase}`;
-            		}
-		        }
-		    });
-		}
+						// Ay için evre bilgisi
+						if (body.id === 'moon' && pos.phase) {
+							row.querySelector('.phase').innerHTML =
+								`<i class="fas fa-${pos.phaseIcon}"></i> ${pos.phase}`;
+						}
+					}
+				});
+			},
 
             formatTime(date) {
                 if (!date || typeof date.toLocaleTimeString !== 'function') {
