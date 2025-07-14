@@ -925,8 +925,8 @@
 					const observer = new Astronomy.Observer(lat, lon, 0);
 
 					// 1. Astronomy Engine ile doğrudan desteklenen cisimler
-					if (astronomyBodies[bodyId]) {
-						const body = astronomyBodies[bodyId];
+					if (celestialBodies[bodyId]) {
+						const body = celestialBodies[bodyId];
 						const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
 						const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
