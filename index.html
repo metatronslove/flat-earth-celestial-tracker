@@ -988,7 +988,7 @@
                     try {
                         const {ra, dec} = Astronomy.Equator(body.id, datetime, observer, true, true);
                         const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
-                        const distance = Astronomy.AstrometricDistance(body.id, datetime);
+                        const distance = Astronomy.Equator(body.id, datetime, observer, true, true).dist;
 
                         // Calculate rise/set times
                         const rise = this.calculateRiseSet(body.id, observer, datetime, +1);
