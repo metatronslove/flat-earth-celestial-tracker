@@ -1091,7 +1091,8 @@
 
                     if (currentTime >= sunriseTime && currentTime < sunsetTime) {
                         // GÜNDÜZ SEGMENTİ
-                        const segment = Math.min(12, Math.floor((currentTime - sunriseTime) / daySegmentDuration) + 1);
+                        const normalizedTime = currentTime + 24;
+                        const segment = Math.min(12, Math.floor((normalizedTime - sunriseTime) / daySegmentDuration) + 1);
                         const start = sunriseTime + (segment-1)*daySegmentDuration;
                         const end = start + daySegmentDuration;
 
@@ -1103,7 +1104,7 @@
                         nightSegment.querySelector('.segment-time').textContent = '';
                     } else {
                         // GECE SEGMENTİ
-                        const normalizedTime = currentTime < sunriseTime ? currentTime: currentTime + 24;
+                        const normalizedTime = currentTime < sunriseTime ? currentTime + 24: currentTime;
                         const segment = Math.min(12, Math.floor((normalizedTime - sunsetTime) / nightSegmentDuration) + 1);
                         const start = sunsetTime + (segment-1)*nightSegmentDuration;
                         const end = start + nightSegmentDuration;
