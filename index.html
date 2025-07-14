@@ -973,32 +973,77 @@
 			},
 
 			// Tabloyu güncelleme fonksiyonu
-			updateCelestialTable() {
-				const date = document.getElementById('date').value;
-				const time = document.getElementById('time').value;
-				const lat = parseFloat(document.getElementById('latitude').value);
-				const lon = parseFloat(document.getElementById('longitude').value);
+            updateCelestialTable() {
+                const date = document.getElementById('date').value;
+                const time = document.getElementById('time').value;
+                const lat = parseFloat(document.getElementById('latitude').value);
+                const lon = parseFloat(document.getElementById('longitude').value);
+                const datetime = new Date(`${date}T${time}Z`);
+                const observer = new Astronomy.Observer(lat, lon, 0);
 
-				celestialBodies.forEach(body => {
-					const pos = this.calculatePosition(body.id, date, time, lat, lon);
-					if (!pos) return;
+                celestialBodies.forEach(body => {
+                    const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
+                    if (!row) return;
 
-					const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
-					if (row) {
-						row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
-						row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
-						row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
-						row.querySelector('.rise-time').textContent = pos.rise;
-						row.querySelector('.set-time').textContent = pos.set;
+                    try {
+                        const {ra, dec} = Astronomy.Equator(body.id, datetime, observer, true, true);
+                        const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
+                        const distance = Astronomy.AstrometricDistance(body.id, datetime);
 
-						// Ay için evre bilgisi
-						if (body.id === 'moon' && pos.phase) {
-							row.querySelector('.phase').innerHTML =
-								`<i class="fas fa-${pos.phaseIcon}"></i> ${pos.phase}`;
-						}
-					}
-				});
-			},
+                        // Calculate rise/set times
+                        const rise = this.calculateRiseSet(body.id, observer, datetime, +1);
+                        const set = this.calculateRiseSet(body.id, observer, datetime, -1);
+
+                        // Update table cells
+                        row.querySelector('.status').textContent = altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+                        row.querySelector('.altitude').textContent = `${altitude.toFixed(1)}°`;
+                        row.querySelector('.azimuth').textContent = `${azimuth.toFixed(1)}°`;
+                        row.querySelector('.rise-time').textContent = rise ? this.formatTime(rise) : '-';
+                        row.querySelector('.set-time').textContent = set ? this.formatTime(set) : '-';
+                        row.querySelector('.distance').textContent = distance ? `${distance.toFixed(3)} AU` : '-';
+
+                        // Special handling for Moon
+                        if (body.id === 'Moon') {
+                            const phase = getMoonPhase(datetime);
+                            row.querySelector('.status').innerHTML =
+                                `${altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında'} <br><small>${phase.name}</small>`;
+                        }
+                    } catch (e) {
+                        console.error(`Error calculating position for ${body.id}:`, e);
+                        row.querySelector('.status').textContent = 'Hesaplama hatası';
+                    }
+                });
+
+                // Update fixed stars
+                fixedStars.forEach(star => {
+                    const row = document.querySelector(`tr[data-body-id="${star.id}"]`);
+                    if (!row) return;
+
+                    try {
+                        const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, star.ra, star.dec, 'normal');
+
+                        row.querySelector('.status').textContent = altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+                        row.querySelector('.altitude').textContent = `${altitude.toFixed(1)}°`;
+                        row.querySelector('.azimuth').textContent = `${azimuth.toFixed(1)}°`;
+                        row.querySelector('.rise-time').textContent = '-';
+                        row.querySelector('.set-time').textContent = '-';
+                        row.querySelector('.distance').textContent = 'Sabit';
+                    } catch (e) {
+                        console.error(`Error calculating position for ${star.id}:`, e);
+                        row.querySelector('.status').textContent = 'Hesaplama hatası';
+                    }
+                });
+            },
+
+            calculateRiseSet(bodyId, observer, date, direction) {
+                try {
+                    const time = Astronomy.SearchRiseSet(bodyId, observer, direction, date, 300);
+                    return time ? new Date(time) : null;
+                } catch (e) {
+                    console.error(`Error calculating rise/set for ${bodyId}:`, e);
+                    return null;
+                }
+            },
 
             formatTime(date) {
                 if (!date || typeof date.toLocaleTimeString !== 'function') {
