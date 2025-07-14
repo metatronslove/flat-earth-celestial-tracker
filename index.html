@@ -1052,6 +1052,80 @@
                 return date.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
             },
 
+            async updateDayNightSegments() {
+                try {
+                    const lat = parseFloat(document.getElementById('latitude').value);
+                    const lon = parseFloat(document.getElementById('longitude').value);
+                    const date = document.getElementById('date').value;
+                    const time = document.getElementById('time').value;
+                    const [hours, minutes] = time.split(':').map(Number);
+
+                    const datetime = new Date(`${date}T${time}Z`);
+                    const observer = new Astronomy.Observer(lat, lon, 0);
+
+                    // 1. GÜN DOĞUMU ve BATIMI HESAPLA
+                    const sunrise = await Astronomy.SearchRiseSet('Sun', observer, +1, datetime, 300);
+                    const sunset = await Astronomy.SearchRiseSet('Sun', observer, -1, datetime, 300);
+
+                    if (!sunrise || !sunset) {
+                        console.error("Güneş olayları hesaplanamadı");
+                        return;
+                    }
+
+                    // 2. SÜRELERİ HESAPLA
+                    const dayDuration = (sunset - sunrise) / (1000 * 60 * 60); // saat cinsinden
+                    const nightDuration = 24 - dayDuration;
+
+                    // 3. SEGMENT SÜRELERİ
+                    const daySegmentDuration = dayDuration / 12; // 12 gündüz segmenti
+                    const nightSegmentDuration = nightDuration / 12; // 12 gece segmenti
+
+                    // 4. MEVCUT ZAMAN
+                    const currentTime = datetime.getHours() + datetime.getMinutes()/60;
+                    const sunriseTime = sunrise.getHours() + sunrise.getMinutes()/60;
+                    const sunsetTime = sunset.getHours() + sunset.getMinutes()/60;
+
+                    // 5. SEGMENT BELİRLEME
+                    const daySegment = document.querySelector('.day-segment');
+                    const nightSegment = document.querySelector('.night-segment');
+
+                    if (currentTime >= sunriseTime && currentTime < sunsetTime) {
+                        // GÜNDÜZ SEGMENTİ
+                        const segment = Math.min(12, Math.floor((currentTime - sunriseTime) / daySegmentDuration) + 1);
+                        const start = sunriseTime + (segment-1)*daySegmentDuration;
+                        const end = start + daySegmentDuration;
+
+                        daySegment.querySelector('.segment-value').textContent = `${segment}. Dilim`;
+                        daySegment.querySelector('.segment-time').textContent =
+                            `${this.formatDecimalTime(start)} - ${this.formatDecimalTime(end)}`;
+
+                        nightSegment.querySelector('.segment-value').textContent = '-';
+                        nightSegment.querySelector('.segment-time').textContent = '';
+                    } else {
+                        // GECE SEGMENTİ
+                        const normalizedTime = currentTime < sunriseTime ? currentTime + 24 : currentTime;
+                        const segment = Math.min(12, Math.floor((normalizedTime - sunsetTime) / nightSegmentDuration) + 1);
+                        const start = sunsetTime + (segment-1)*nightSegmentDuration;
+                        const end = start + nightSegmentDuration;
+
+                        nightSegment.querySelector('.segment-value').textContent = `${segment}. Dilim`;
+                        nightSegment.querySelector('.segment-time').textContent =
+                            `${this.formatDecimalTime(start % 24)} - ${this.formatDecimalTime(end % 24)}`;
+
+                        daySegment.querySelector('.segment-value').textContent = '-';
+                        daySegment.querySelector('.segment-time').textContent = '';
+                    }
+                } catch (error) {
+                    console.error("Segment hesaplama hatası:", error);
+                }
+            },
+
+            formatDecimalTime(decimal) {
+                const hours = Math.floor(decimal);
+                const minutes = Math.round((decimal - hours) * 60);
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            },
+
             updateTimeFromSlider() {
                 const slider = document.getElementById('time-slider');
                 const totalSeconds = parseInt(slider.value);
@@ -1111,7 +1185,7 @@
 
                 const hours = parseInt(document.getElementById('time').value.split(':')[0]);
                 const minutes = parseInt(document.getElementById('time').value.split(':')[1]);
-                updateDayNightSegments(hours, minutes);
+                await this.updateDayNightSegments(); // YENİ ÇAĞRI
             },
 
             updateAll() {
@@ -1181,22 +1255,6 @@
 
                 container.appendChild(element);
             });
-        }
-
-        function updateDayNightSegments(hours, minutes) {
-            const daySegment = document.querySelector('.day-segment .segment-value');
-            const nightSegment = document.querySelector('.night-segment .segment-value');
-
-            if (hours >= 6 && hours < 18) {
-                const segment = Math.floor(((hours - 6) * 60 + minutes) / 180) + 1;
-                daySegment.textContent = `${segment}. Dilim`;
-                nightSegment.textContent = '-';
-            } else {
-                daySegment.textContent = '-';
-                let hour = hours < 6 ? hours + 24 : hours;
-                const segment = Math.floor(((hour - 18) * 60 + minutes) / 180) + 1;
-                nightSegment.textContent = `${segment}. Dilim`;
-            }
         }
     </script>
 </body>
