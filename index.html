@@ -1092,7 +1092,7 @@
                     if (currentTime >= sunriseTime && currentTime < sunsetTime) {
                         // GÜNDÜZ SEGMENTİ
                         const normalizedTime = currentTime;
-                        const segment = Math.min(12, Math.floor((sunsetTime - normalizedTime) / daySegmentDuration) + 1);
+                        const segment = Math.min(12, Math.floor((sunriseTime + normalizedTime) / daySegmentDuration) + 1);
                         const start = sunsetTime - (segment-1)*daySegmentDuration;
                         const end = start + daySegmentDuration;
 
