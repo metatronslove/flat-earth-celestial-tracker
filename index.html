@@ -745,6 +745,42 @@
             {id: 'Capella', name: 'Capella (Ayyuk)', color: '#FFEA00', size: 8, ra: 5.28, dec: 45.99}
         ];
 
+
+		// Ay evreleri için fonksiyon
+		function getMoonPhase(date) {
+			const phase = Astronomy.MoonPhase(date);
+			let phaseName;
+			let icon;
+
+			if (phase < 0.03 || phase > 0.97) {
+				phaseName = "Yeni Ay";
+				icon = "moon";
+			} else if (phase < 0.22) {
+				phaseName = "Hilal";
+				icon = "moon";
+			} else if (phase < 0.28) {
+				phaseName = "İlk Dördün";
+				icon = "moon";
+			} else if (phase < 0.47) {
+				phaseName = "Şişkin Ay";
+				icon = "moon";
+			} else if (phase < 0.53) {
+				phaseName = "Dolunay";
+				icon = "moon";
+			} else if (phase < 0.72) {
+				phaseName = "Şişkin Ay";
+				icon = "moon";
+			} else if (phase < 0.78) {
+				phaseName = "Son Dördün";
+				icon = "moon";
+			} else {
+				phaseName = "Hilal";
+				icon = "moon";
+			}
+
+			return { name: phaseName, icon: icon, value: phase };
+		}
+
         const CelestialTracker = {
             init() {
                 this.initCityDropdown();
@@ -883,69 +919,86 @@
                 });
             },
 
-            calculatePosition(bodyId, date, time, lat, lon) {
-                try {
-                    const datetime = new Date(`${date}T${time}:00`);
-                    const astroTime = new Astronomy.AstroTime(datetime);
-                    const observer = new Astronomy.Observer(lat, lon, 0);
+		calculatePosition(bodyId, date, time, lat, lon) {
+    		try {
+        		const datetime = new Date(`${date}T${time}Z`);
+        		const observer = new Astronomy.Observer(lat, lon, 0);
 
-                    let result = {};
+        		// 1. Astronomy Engine ile doğrudan desteklenen cisimler
+        		if (astronomyBodies[bodyId]) {
+            		const body = astronomyBodies[bodyId];
+            		const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
+            		const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
-                    // Astronomy.js ile desteklenen cisimler
-                    if (celestialBodies.find(b => b.id === bodyId)) {
-                        const equator = Astronomy.Equator(bodyId, astroTime, observer, true, true);
-                        const horizon = Astronomy.Horizon(astroTime, observer, equator.ra, equator.dec, 'normal');
+            		// Ay için ekstra bilgiler
+            		let moonInfo = {};
+            		if (bodyId === 'moon') {
+                		const phase = getMoonPhase(datetime);
+                		moonInfo = {
+                    		phase: phase.name,
+                    		phaseIcon: phase.icon,
+                    		phaseValue: phase.value
+                		};
+            		}
 
-                        result = {
-                            altitude: horizon.altitude,
-                            azimuth: horizon.azimuth,
-                            distance: equator.dist,
-                            ra: equator.ra,
-                            dec: equator.dec
-                        };
+            		return {
+                		altitude,
+                		azimuth,
+                		rise: this.calculateRiseSet(body, observer, datetime, +1),
+                		set: this.calculateRiseSet(body, observer, datetime, -1),
+                		distance: Astronomy.AstrometricDistance(body, datetime),
+                		...moonInfo
+            		};
+        		}
+        		// 2. Sabit yıldızlar için
+        		else {
+            		const star = fixedStars.find(s => s.id === bodyId);
+            		if (star) {
+                		const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, star.ra, star.dec, 'normal');
+                		return {
+                    		altitude,
+                    		azimuth,
+                    		rise: '-', // Sabit yıldızlar için farklı hesaplama gerekir
+                    		set: '-',
+                    		distance: null
+                		};
+            		}
+        		}
 
-                        // Parlaklık hesaplama
-                        try {
-                            const illum = Astronomy.Illumination(bodyId, astroTime);
-                            result.magnitude = illum.mag;
-                        } catch (e) {
-                            result.magnitude = null;
-                        }
+        		return null;
+    		} catch (e) {
+        		console.error(`Hesaplama hatası (${bodyId}):`, e);
+        		return null;
+    		}
+		},
 
-                        // Doğuş/batış hesaplama
-                        try {
-                            const riseTime = Astronomy.SearchRiseSet(bodyId, observer, 1, astroTime, 1);
-                            const setTime = Astronomy.SearchRiseSet(bodyId, observer, -1, astroTime, 1);
+		// Tabloyu güncelleme fonksiyonu
+		updateCelestialTable() {
+    		const date = document.getElementById('date').value;
+    		const time = document.getElementById('time').value;
+    		const lat = parseFloat(document.getElementById('latitude').value);
+    		const lon = parseFloat(document.getElementById('longitude').value);
 
-                            result.rise = riseTime ? this.formatTime(riseTime.date) : '-';
-                            result.set = setTime ? this.formatTime(setTime.date) : '-';
-                        } catch (e) {
-                            result.rise = '-';
-                            result.set = '-';
-                        }
-                    }
-                    // Sabit yıldızlar için
-                    else {
-                        const star = fixedStars.find(s => s.id === bodyId);
-                        if (star) {
-                            const horizon = Astronomy.Horizon(astroTime, observer, star.ra, star.dec, 'normal');
-                            result = {
-                                altitude: horizon.altitude,
-                                azimuth: horizon.azimuth,
-                                distance: null,
-                                rise: '-',
-                                set: '-',
-                                magnitude: null
-                            };
-                        }
-                    }
+    		celestialBodies.forEach(body => {
+        		const pos = this.calculatePosition(body.id, date, time, lat, lon);
+        		if (!pos) return;
 
-                    return result;
-                } catch (e) {
-                    console.error(`Hesaplama hatası (${bodyId}):`, e);
-                    return null;
-                }
-            },
+        		const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
+        		if (row) {
+            		row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
+            		row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
+            		row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
+            		row.querySelector('.rise-time').textContent = pos.rise;
+            		row.querySelector('.set-time').textContent = pos.set;
+
+            		// Ay için evre bilgisi
+            		if (body.id === 'moon' && pos.phase) {
+                		row.querySelector('.phase').innerHTML =
+                    		`<i class="fas fa-${pos.phaseIcon}"></i> ${pos.phase}`;
+            		}
+		        }
+		    });
+		}
 
             formatTime(date) {
                 if (!date || typeof date.toLocaleTimeString !== 'function') {
@@ -964,45 +1017,6 @@
                 document.getElementById('time').value = timeStr;
                 document.getElementById('current-time-display').textContent = timeStr;
                 this.updateCelestialPositions();
-            },
-
-            updateCelestialTable() {
-                const date = document.getElementById('date').value;
-                const time = document.getElementById('time').value;
-                const lat = parseFloat(document.getElementById('latitude').value);
-                const lon = parseFloat(document.getElementById('longitude').value);
-
-                // Gezegenler
-                celestialBodies.forEach(body => {
-                    const pos = this.calculatePosition(body.id, date, time, lat, lon);
-                    if (!pos) return;
-
-                    const row = document.querySelector(`tr[data-body-id="${body.id}"]`);
-                    if (row) {
-                        row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
-                        row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
-                        row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
-                        row.querySelector('.rise-time').textContent = pos.rise;
-                        row.querySelector('.set-time').textContent = pos.set;
-                        row.querySelector('.distance').textContent = pos.distance ? `${pos.distance.toFixed(3)} AU` : '-';
-                        row.querySelector('.magnitude').textContent = pos.magnitude !== null ? pos.magnitude.toFixed(1) : '-';
-                    }
-                });
-
-                // Sabit yıldızlar
-                fixedStars.forEach(star => {
-                    const pos = this.calculatePosition(star.id, date, time, lat, lon);
-                    if (!pos) return;
-
-                    const row = document.querySelector(`tr[data-body-id="${star.id}"]`);
-                    if (row) {
-                        row.querySelector('.status').textContent = pos.altitude > 0 ? 'Gökyüzünde' : 'Ufkun altında';
-                        row.querySelector('.altitude').textContent = `${pos.altitude.toFixed(1)}°`;
-                        row.querySelector('.azimuth').textContent = `${pos.azimuth.toFixed(1)}°`;
-                        row.querySelector('.rise-time').textContent = pos.rise;
-                        row.querySelector('.set-time').textContent = pos.set;
-                    }
-                });
             },
 
             updateCelestialPositions() {
