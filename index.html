@@ -1052,7 +1052,7 @@
                 return date.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
             },
 
-            async updateDayNightSegments() {
+            updateDayNightSegments() {
                 try {
                     const lat = parseFloat(document.getElementById('latitude').value);
                     const lon = parseFloat(document.getElementById('longitude').value);
@@ -1185,7 +1185,7 @@
 
                 const hours = parseInt(document.getElementById('time').value.split(':')[0]);
                 const minutes = parseInt(document.getElementById('time').value.split(':')[1]);
-                await this.updateDayNightSegments(); // YENİ ÇAĞRI
+                this.updateDayNightSegments(); // YENİ ÇAĞRI
             },
 
             updateAll() {
