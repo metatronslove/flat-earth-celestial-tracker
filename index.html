@@ -788,26 +788,26 @@
             {id: 'capella', name: 'Capella (Ayyuk)', color: '#FFEA00', size: 8, symbol: 'star', type: 'fixed-star'}
         ];
 
-        // Astronomy Engine ile desteklenen tüm gök cisimleri
-const astronomyBodies = {
-    'sun': Astronomy.Body.Sun,
-    'moon': Astronomy.Body.Moon,
-    'mercury': Astronomy.Body.Mercury,
-    'venus': Astronomy.Body.Venus,
-    'mars': Astronomy.Body.Mars,
-    'jupiter': Astronomy.Body.Jupiter,
-    'saturn': Astronomy.Body.Saturn,
-    'uranus': Astronomy.Body.Uranus,
-    'neptune': Astronomy.Body.Neptune
-};
-
-// VSOP87 teorisi ile desteklenen ek cisimler
-const vsop87Bodies = {
-    'lilith': 'Lilith' // Astronomide Kara Ay (Ay'ın ikinci odak noktası)
-};
-
     // Uygulama ana yapısı
-    const CelestialTracker = {
+    const
+const astronomyBodies = {
+    sun: Astronomy.Body.Sun,
+    moon: Astronomy.Body.Moon,
+    mercury: Astronomy.Body.Mercury,
+    venus: Astronomy.Body.Venus,
+    mars: Astronomy.Body.Mars,
+    jupiter: Astronomy.Body.Jupiter,
+    saturn: Astronomy.Body.Saturn,
+    uranus: Astronomy.Body.Uranus,
+    neptune: Astronomy.Body.Neptune
+};
+
+const vsop87Bodies = {
+    lilith: 'Lilith'
+};
+
+
+const CelestialTracker = {
         init() {
 			this.initCityDropdown();
 			this.setCurrentDateTime();
@@ -899,6 +899,24 @@ const vsop87Bodies = {
     });
 },
 
+
+// Astronomy Engine ile desteklenen tüm gök cisimleri
+const astronomyBodies = {
+    'sun': Astronomy.Body.Sun,
+    'moon': Astronomy.Body.Moon,
+    'mercury': Astronomy.Body.Mercury,
+    'venus': Astronomy.Body.Venus,
+    'mars': Astronomy.Body.Mars,
+    'jupiter': Astronomy.Body.Jupiter,
+    'saturn': Astronomy.Body.Saturn,
+    'uranus': Astronomy.Body.Uranus,
+    'neptune': Astronomy.Body.Neptune
+};
+
+// VSOP87 teorisi ile desteklenen ek cisimler
+const vsop87Bodies = {
+    'lilith': 'Lilith' // Astronomide Kara Ay (Ay'ın ikinci odak noktası)
+};
 
 calculatePosition(bodyId, date, time, lat, lon) {
     try {
