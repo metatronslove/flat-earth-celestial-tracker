@@ -1065,7 +1065,7 @@
 
                     // 1. GÜN DOĞUMU ve BATIMI HESAPLA
                     const sunrise = this.calculateRiseSet('Sun', observer, datetime, +1);
-                    const sunset = this.calculateRiseSet('Sun', observer, datetime, -1);
+                    const sunset = this.calculateRiseSet('Sun', observer, datetime, +1);
 
                     if (!sunrise || !sunset) {
                         console.error("Güneş olayları hesaplanamadı");
