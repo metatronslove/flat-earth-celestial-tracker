@@ -1098,48 +1098,32 @@ updateDayNightSegmentsTable() {
     const observer = new Astronomy.Observer(lat, lon, 0);
 
     try {
-        // 1. GÜNEŞ DOĞUŞ ve BATIŞ ZAMANLARINI HESAPLA
-        const dateObj = new Date(date + 'T12:00:00Z');
+        // Mevcut çalışan yöntemi kullanarak doğuş/batış hesapla
+        const datetime = new Date(date + 'T12:00:00Z');
+        const sunrise = this.calculateRiseSet('Sun', observer, datetime, +1);
+        const sunset = this.calculateRiseSet('Sun', observer, datetime, -1);
 
-        // Astronomy.js 2.0+ için düzeltme
-        const sunriseTime = Astronomy.SearchHourAngle('Sun', observer, 0, dateObj);
-        const sunsetTime = Astronomy.SearchHourAngle('Sun', observer, 12, dateObj);
-
-        if (sunriseTime === null || sunsetTime === null) {
+        if (!sunrise || !sunset) {
             console.error("Güneş olayları hesaplanamadı");
             return;
         }
 
-        const sunrise = new Date(sunriseTime);
-        const sunset = new Date(sunsetTime);
-
-        // 2. GÜNDÜZ ve GECE SÜRELERİNİ HESAPLA
-        const dayDuration = (sunset - sunrise) / (1000 * 60 * 60); // saat cinsinden
+        // Gündüz ve gece sürelerini hesapla
+        const dayDuration = (sunset - sunrise) / (1000 * 60 * 60);
         const nightDuration = 24 - dayDuration;
 
-        // 3. SEGMENT SÜRELERİNİ KONTROL ET
-        if (dayDuration <= 0 || dayDuration >= 24 || nightDuration <= 0 || nightDuration >= 24) {
-            console.error("Geçersiz gündüz/gece süreleri:", dayDuration, nightDuration);
-            return;
-        }
-
-        // 4. TABLOYU OLUŞTUR
+        // Segmentleri oluştur
         const tableBody = document.getElementById('segments-data');
         tableBody.innerHTML = '';
 
         // Gündüz segmentleri
         for (let i = 1; i <= 12; i++) {
-            const startHour = sunrise.getUTCHours() + sunrise.getUTCMinutes()/60 + (i-1)*(dayDuration/12);
+            const startHour = sunrise.getHours() + sunrise.getMinutes()/60 + (i-1)*(dayDuration/12);
             const endHour = startHour + (dayDuration/12);
 
-            // Segment ortasındaki zamanı hesapla
-            const segmentMidHour = startHour + (dayDuration/24);
             const segmentMidDate = new Date(sunrise.getTime() + (i-0.5)*(dayDuration/12)*60*60*1000);
-            const segmentMidTime = this.formatTime(segmentMidDate);
-
-            // Güneş ve Ay konumlarını hesapla
-            const sunPos = this.calculatePositionAtHour(segmentMidHour, 'Sun', date, lat, lon);
-            const moonPos = this.calculatePositionAtHour(segmentMidHour, 'Moon', date, lat, lon);
+            const sunPos = this.calculatePosition('Sun', date, this.formatTime(segmentMidDate), lat, lon);
+            const moonPos = this.calculatePosition('Moon', date, this.formatTime(segmentMidDate), lat, lon);
 
             const row = document.createElement('tr');
             row.className = 'day-segment-row';
@@ -1154,22 +1138,16 @@ updateDayNightSegmentsTable() {
 
         // Gece segmentleri
         for (let i = 1; i <= 12; i++) {
-            let startHour = sunset.getUTCHours() + sunset.getUTCMinutes()/60 + (i-1)*(nightDuration/12);
+            let startHour = sunset.getHours() + sunset.getMinutes()/60 + (i-1)*(nightDuration/12);
             let endHour = startHour + (nightDuration/12);
 
-            // 24 saat üzerinde döngü sağla
-            if (endHour > 24) endHour -= 24;
-            if (startHour > 24) startHour -= 24;
+            // 24 saatlik döngü sağla
+            startHour = startHour % 24;
+            endHour = endHour % 24;
 
-            // Segment ortasındaki zamanı hesapla
-            let segmentMidHour = startHour + (nightDuration/24);
-            if (segmentMidHour > 24) segmentMidHour -= 24;
             const segmentMidDate = new Date(sunset.getTime() + (i-0.5)*(nightDuration/12)*60*60*1000);
-            const segmentMidTime = this.formatTime(segmentMidDate);
-
-            // Güneş ve Ay konumlarını hesapla
-            const sunPos = this.calculatePositionAtHour(segmentMidHour, 'Sun', date, lat, lon);
-            const moonPos = this.calculatePositionAtHour(segmentMidHour, 'Moon', date, lat, lon);
+            const sunPos = this.calculatePosition('Sun', date, this.formatTime(segmentMidDate), lat, lon);
+            const moonPos = this.calculatePosition('Moon', date, this.formatTime(segmentMidDate), lat, lon);
 
             const row = document.createElement('tr');
             row.className = 'night-segment-row';
@@ -1181,11 +1159,11 @@ updateDayNightSegmentsTable() {
             `;
             tableBody.appendChild(row);
         }
+
     } catch (error) {
         console.error("Segment tablosu oluşturma hatası:", error);
-        // Hata durumunda kullanıcıya bilgi ver
         const tableBody = document.getElementById('segments-data');
-        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Segment bilgileri hesaplanırken hata oluştu</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Hesaplama hatası: ' + error.message + '</td></tr>';
     }
 },
 
