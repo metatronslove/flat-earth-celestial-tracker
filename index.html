@@ -911,7 +911,7 @@
 
             // 1. Astronomy Engine ile doğrudan desteklenen cisimler
             if (celestialBodies.some(b => b.id === bodyId)) {
-                const {ra, dec} = Astronomy.Equator(bodyId, datetime, observer, true, true);
+                const {ra, dec, dist} = Astronomy.Equator(bodyId, datetime, observer, true, true);
                 const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
                 // Ay için ekstra bilgiler
@@ -930,7 +930,7 @@
                     azimuth,
                     rise: this.calculateRiseSet(bodyId, observer, datetime, +1),
                     set: this.calculateRiseSet(bodyId, observer, datetime, -1),
-                    distance: Astronomy.AstrometricDistance(bodyId, datetime),
+                    distance: dist, // Astronomy.Equator'dan gelen dist değeri kullanılıyor
                     ...moonInfo
                 };
             }
