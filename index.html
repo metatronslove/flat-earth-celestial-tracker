@@ -183,81 +183,6 @@
             box-shadow: 0 0 12px rgba(79, 195, 247, 0.3);
         }
 
-        .time-slider-container {
-            margin: 35px 0;
-            background: rgba(25, 35, 70, 0.7);
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid rgba(156, 39, 176, 0.4);
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
-        }
-
-        .time-slider-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 18px;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .time-slider {
-            width: 100%;
-            height: 20px;
-            -webkit-appearance: none;
-            background: linear-gradient(to right, #1a237e, #4a148c, #6a1b9a);
-            border-radius: 10px;
-            outline: none;
-            box-shadow: 0 0 12px rgba(156, 39, 176, 0.4);
-        }
-
-        .time-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 179, 0, 0.9);
-            border: 3px solid #ff9800;
-            transition: transform 0.2s;
-        }
-
-        .time-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
-        }
-
-        .day-night-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 12px;
-            font-size: 1.15rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .day-segment, .night-segment {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .segment-label {
-            font-size: 1.05rem;
-            opacity: 0.85;
-        }
-
-        .segment-value {
-            font-weight: bold;
-            color: var(--accent);
-            font-size: 1.4rem;
-            min-width: 50px;
-            text-align: center;
-        }
-
         .celestial-display {
             position: relative;
             height: 500px;
@@ -505,6 +430,72 @@
         .hidden {
             display: none;
         }
+
+        /* Yeni eklenen segment tablosu stilleri */
+        .segments-container {
+            margin: 30px 0;
+            background: rgba(25, 35, 70, 0.7);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(156, 39, 176, 0.4);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .segments-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .segments-table th {
+            background: rgba(79, 195, 247, 0.3);
+            padding: 12px;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .segments-table td {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .segments-table tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .day-segment-row {
+            background: rgba(255, 179, 0, 0.1) !important;
+        }
+
+        .night-segment-row {
+            background: rgba(79, 195, 247, 0.1) !important;
+        }
+
+        .segment-time {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .segment-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .sun-position, .moon-position {
+            font-size: 0.9rem;
+        }
+
+        .sun-position {
+            color: #FFB300;
+        }
+
+        .moon-position {
+            color: #E0E0E0;
+        }
     </style>
 </head>
 <body>
@@ -550,11 +541,6 @@
                     <input type="date" id="date" value="2023-10-15">
                 </div>
 
-                <div class="input-group">
-                    <label for="time"><i class="fas fa-clock"></i> Saat (24 saat formatında)</label>
-                    <input type="time" id="time" value="21:30">
-                </div>
-
                 <div class="actions">
                     <button class="btn btn-primary" id="calculate-btn">
                         <i class="fas fa-calculator"></i> Gök Cisimlerini Hesapla
@@ -568,29 +554,29 @@
             <div class="output-section">
                 <h2 class="section-title"><i class="fas fa-stars"></i> Göksel Konumlar ve Analizler</h2>
 
-                <div class="time-slider-container">
-                    <div class="time-slider-header">
-                        <span><i class="fas fa-sliders"></i> Gün İçi Zaman Kaydırıcı</span>
-                        <span id="current-time-display">21:30</span>
-                    </div>
-                    <input type="range" min="0" max="86400" value="77400" class="time-slider" id="time-slider">
-
-                    <div class="day-night-indicator">
-                        <div class="day-segment">
-                            <span class="segment-label">Gündüz Dilimi</span>
-                            <span class="segment-value">-</span>
-                        </div>
-                        <div class="night-segment">
-                            <span class="segment-label">Gece Dilimi</span>
-                            <span class="segment-value">4. Dilim</span>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="celestial-display" id="celestial-display">
                     <div class="horizon-line"></div>
                     <div class="compass">Kuzey ↑</div>
                     <div class="flat-earth-model">Düz Dünya Modeli - Geocentric Sistem</div>
+                </div>
+
+                <div class="segments-container">
+                    <h3 class="segment-title">Gün ve Gece Segmentleri</h3>
+                    <div class="celestial-table-container">
+                        <table class="segments-table" id="segments-table">
+                            <thead>
+                                <tr>
+                                    <th>Segment</th>
+                                    <th>Zaman Aralığı</th>
+                                    <th>Güneş Konumu</th>
+                                    <th>Ay Konumu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="segments-data">
+                                <!-- Segmentler buraya eklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="celestial-table-container">
@@ -745,41 +731,40 @@
             {id: 'Capella', name: 'Capella (Ayyuk)', color: '#FFEA00', size: 8, ra: 5.28, dec: 45.99}
         ];
 
+        // Ay evreleri için fonksiyon
+        function getMoonPhase(date) {
+            const phase = Astronomy.MoonPhase(date);
+            let phaseName;
+            let icon;
 
-		// Ay evreleri için fonksiyon
-		function getMoonPhase(date) {
-			const phase = Astronomy.MoonPhase(date);
-			let phaseName;
-			let icon;
+            if (phase < 0.03 || phase > 0.97) {
+                phaseName = "Yeni Ay";
+                icon = "moon";
+            } else if (phase < 0.22) {
+                phaseName = "Hilal";
+                icon = "moon";
+            } else if (phase < 0.28) {
+                phaseName = "İlk Dördün";
+                icon = "moon";
+            } else if (phase < 0.47) {
+                phaseName = "Şişkin Ay";
+                icon = "moon";
+            } else if (phase < 0.53) {
+                phaseName = "Dolunay";
+                icon = "moon";
+            } else if (phase < 0.72) {
+                phaseName = "Şişkin Ay";
+                icon = "moon";
+            } else if (phase < 0.78) {
+                phaseName = "Son Dördün";
+                icon = "moon";
+            } else {
+                phaseName = "Hilal";
+                icon = "moon";
+            }
 
-			if (phase < 0.03 || phase > 0.97) {
-				phaseName = "Yeni Ay";
-				icon = "moon";
-			} else if (phase < 0.22) {
-				phaseName = "Hilal";
-				icon = "moon";
-			} else if (phase < 0.28) {
-				phaseName = "İlk Dördün";
-				icon = "moon";
-			} else if (phase < 0.47) {
-				phaseName = "Şişkin Ay";
-				icon = "moon";
-			} else if (phase < 0.53) {
-				phaseName = "Dolunay";
-				icon = "moon";
-			} else if (phase < 0.72) {
-				phaseName = "Şişkin Ay";
-				icon = "moon";
-			} else if (phase < 0.78) {
-				phaseName = "Son Dördün";
-				icon = "moon";
-			} else {
-				phaseName = "Hilal";
-				icon = "moon";
-			}
-
-			return { name: phaseName, icon: icon, value: phase };
-		}
+            return { name: phaseName, icon: icon, value: phase };
+        }
 
         const CelestialTracker = {
             init() {
@@ -811,9 +796,6 @@
             setCurrentDateTime() {
                 const now = new Date();
                 document.getElementById('date').value = now.toISOString().split('T')[0];
-                document.getElementById('time').value =
-                    `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-                document.getElementById('time-slider').value = now.getHours() * 3600 + now.getMinutes() * 60;
             },
 
             setCurrentLocation() {
@@ -843,7 +825,6 @@
 
                 document.getElementById('calculate-btn').addEventListener('click', () => this.updateAll());
                 document.getElementById('reset-btn').addEventListener('click', () => this.resetToDefaults());
-                document.getElementById('time-slider').addEventListener('input', () => this.updateTimeFromSlider());
 
                 // Takvim sistemi değiştirme
                 document.getElementById('gregorian-btn').addEventListener('click', () => this.switchCalendar('gregorian'));
@@ -919,63 +900,62 @@
                 });
             },
 
-			calculatePosition(bodyId, date, time, lat, lon) {
-				try {
-					const datetime = new Date(`${date}T${time}Z`);
-					const observer = new Astronomy.Observer(lat, lon, 0);
+            calculatePosition(bodyId, date, time, lat, lon) {
+                try {
+                    const datetime = new Date(`${date}T${time}Z`);
+                    const observer = new Astronomy.Observer(lat, lon, 0);
 
-					// 1. Astronomy Engine ile doğrudan desteklenen cisimler
-					if (celestialBodies[bodyId]) {
-						const body = celestialBodies[bodyId];
-						const {ra, dec} = Astronomy.Equator(body, datetime, observer, true, true);
-						const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
+                    // 1. Astronomy Engine ile doğrudan desteklenen cisimler
+                    if (celestialBodies.some(b => b.id === bodyId)) {
+                        const {ra, dec} = Astronomy.Equator(bodyId, datetime, observer, true, true);
+                        const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
 
-						// Ay için ekstra bilgiler
-						let moonInfo = {};
-						if (bodyId === 'moon') {
-							const phase = getMoonPhase(datetime);
-							moonInfo = {
-								phase: phase.name,
-								phaseIcon: phase.icon,
-								phaseValue: phase.value
-							};
-						}
+                        // Ay için ekstra bilgiler
+                        let moonInfo = {};
+                        if (bodyId === 'Moon') {
+                            const phase = getMoonPhase(datetime);
+                            moonInfo = {
+                                phase: phase.name,
+                                phaseIcon: phase.icon,
+                                phaseValue: phase.value
+                            };
+                        }
 
-						return {
-							altitude,
-							azimuth,
-							rise: this.calculateRiseSet(body, observer, datetime, +1),
-							set: this.calculateRiseSet(body, observer, datetime, -1),
-							distance: Astronomy.AstrometricDistance(body, datetime),
-							...moonInfo
-						};
-					}
-					// 2. Sabit yıldızlar için
-					else {
-						const star = fixedStars.find(s => s.id === bodyId);
-						if (star) {
-							const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, star.ra, star.dec, 'normal');
-							return {
-								altitude,
-								azimuth,
-								rise: '-', // Sabit yıldızlar için farklı hesaplama gerekir
-								set: '-',
-								distance: null
-							};
-						}
-					}
+                        return {
+                            altitude,
+                            azimuth,
+                            rise: this.calculateRiseSet(bodyId, observer, datetime, +1),
+                            set: this.calculateRiseSet(bodyId, observer, datetime, -1),
+                            distance: Astronomy.AstrometricDistance(bodyId, datetime),
+                            ...moonInfo
+                        };
+                    }
+                    // 2. Sabit yıldızlar için
+                    else {
+                        const star = fixedStars.find(s => s.id === bodyId);
+                        if (star) {
+                            const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, star.ra, star.dec, 'normal');
+                            return {
+                                altitude,
+                                azimuth,
+                                rise: '-', // Sabit yıldızlar için farklı hesaplama gerekir
+                                set: '-',
+                                distance: null
+                            };
+                        }
+                    }
 
-					return null;
-				} catch (e) {
-					console.error(`Hesaplama hatası (${bodyId}):`, e);
-					return null;
-				}
-			},
+                    return null;
+                } catch (e) {
+                    console.error(`Hesaplama hatası (${bodyId}):`, e);
+                    return null;
+                }
+            },
 
-			// Tabloyu güncelleme fonksiyonu
+            // Tabloyu güncelleme fonksiyonu
             updateCelestialTable() {
                 const date = document.getElementById('date').value;
-                const time = document.getElementById('time').value;
+                const time = "12:00"; // Gün ortası için sabit saat
                 const lat = parseFloat(document.getElementById('latitude').value);
                 const lon = parseFloat(document.getElementById('longitude').value);
                 const datetime = new Date(`${date}T${time}Z`);
@@ -1052,96 +1032,15 @@
                 return date.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
             },
 
-            updateDayNightSegments() {
-                try {
-                    const lat = parseFloat(document.getElementById('latitude').value);
-                    const lon = parseFloat(document.getElementById('longitude').value);
-                    const date = document.getElementById('date').value;
-                    const time = document.getElementById('time').value;
-                    const [hours, minutes] = time.split(':').map(Number);
-
-                    const datetime = new Date(`${date}T${time}Z`);
-                    const observer = new Astronomy.Observer(lat, lon, 0);
-
-                    // 1. GÜN DOĞUMU ve BATIMI HESAPLA
-                    const sunrise = this.calculateRiseSet('Sun', observer, datetime, +1);
-                    const sunset = this.calculateRiseSet('Sun', observer, datetime, +1);
-
-                    if (!sunrise || !sunset) {
-                        console.error("Güneş olayları hesaplanamadı");
-                        return;
-                    }
-
-                    // 2. SÜRELERİ HESAPLA
-                    const dayDuration = (sunset - sunrise) / (1000 * 60 * 60); // saat cinsinden
-                    const nightDuration = 24 - dayDuration;
-
-                    // 3. SEGMENT SÜRELERİ
-                    const daySegmentDuration = dayDuration / 12; // 12 gündüz segmenti
-                    const nightSegmentDuration = nightDuration / 12; // 12 gece segmenti
-
-                    // 4. MEVCUT ZAMAN
-                    const currentTime = datetime.getHours() + datetime.getMinutes()/60;
-                    const sunriseTime = sunrise.getHours() + sunrise.getMinutes()/60;
-                    const sunsetTime = sunset.getHours() + sunset.getMinutes()/60;
-
-                    // 5. SEGMENT BELİRLEME
-                    const daySegment = document.querySelector('.day-segment');
-                    const nightSegment = document.querySelector('.night-segment');
-
-                    if (currentTime >= sunriseTime && currentTime < sunsetTime) {
-                        // GÜNDÜZ SEGMENTİ
-                        const normalizedTime = currentTime;
-                        const segment = Math.min(12, Math.floor((sunriseTime - normalizedTime) / daySegmentDuration) + 1);
-                        const start = sunsetTime - (segment-1)*daySegmentDuration;
-                        const end = start + daySegmentDuration;
-
-                        daySegment.querySelector('.segment-value').textContent = `${segment}. Dilim`;
-                        daySegment.querySelector('.segment-time').textContent =
-                            `${this.formatDecimalTime(start)} - ${this.formatDecimalTime(end)}`;
-
-                        nightSegment.querySelector('.segment-value').textContent = '-';
-                        nightSegment.querySelector('.segment-time').textContent = '';
-                    } else {
-                        // GECE SEGMENTİ
-                        const normalizedTime = currentTime < sunriseTime ? currentTime + 24: currentTime;
-                        const segment = Math.min(12, Math.floor((normalizedTime - sunsetTime) / nightSegmentDuration) + 1);
-                        const start = sunsetTime + (segment-1)*nightSegmentDuration;
-                        const end = start + nightSegmentDuration;
-
-                        nightSegment.querySelector('.segment-value').textContent = `${segment}. Dilim`;
-                        nightSegment.querySelector('.segment-time').textContent =
-                            `${this.formatDecimalTime(start % 24)} - ${this.formatDecimalTime(end % 24)}`;
-
-                        daySegment.querySelector('.segment-value').textContent = '-';
-                        daySegment.querySelector('.segment-time').textContent = '';
-                    }
-                } catch (error) {
-                    console.error("Segment hesaplama hatası:", error);
-                }
-            },
-
             formatDecimalTime(decimal) {
                 const hours = Math.floor(decimal);
                 const minutes = Math.round((decimal - hours) * 60);
                 return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             },
 
-            updateTimeFromSlider() {
-                const slider = document.getElementById('time-slider');
-                const totalSeconds = parseInt(slider.value);
-                const hours = Math.floor(totalSeconds / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-                document.getElementById('time').value = timeStr;
-                document.getElementById('current-time-display').textContent = timeStr;
-                this.updateCelestialPositions();
-            },
-
             updateCelestialPositions() {
                 const date = document.getElementById('date').value;
-                const time = document.getElementById('time').value;
+                const time = "12:00"; // Gün ortası için sabit saat
                 const lat = parseFloat(document.getElementById('latitude').value);
                 const lon = parseFloat(document.getElementById('longitude').value);
 
@@ -1183,15 +1082,94 @@
                         info.innerHTML = `<strong>${star.name}</strong><br>Yükseklik: ${pos.altitude.toFixed(1)}°<br>Açı: ${pos.azimuth.toFixed(1)}°`;
                     }
                 });
+            },
 
-                const hours = parseInt(document.getElementById('time').value.split(':')[0]);
-                const minutes = parseInt(document.getElementById('time').value.split(':')[1]);
-                this.updateDayNightSegments(); // YENİ ÇAĞRI
+            // Yeni eklenen segment tablosu güncelleme fonksiyonu
+            updateDayNightSegmentsTable() {
+                const date = document.getElementById('date').value;
+                const lat = parseFloat(document.getElementById('latitude').value);
+                const lon = parseFloat(document.getElementById('longitude').value);
+                const datetime = new Date(`${date}T12:00:00Z`);
+                const observer = new Astronomy.Observer(lat, lon, 0);
+
+                try {
+                    // 1. GÜNEŞ DOĞUŞ ve BATIŞ ZAMANLARINI HESAPLA
+                    const sunrise = this.calculateRiseSet('Sun', observer, datetime, +1);
+                    const sunset = this.calculateRiseSet('Sun', observer, datetime, -1);
+
+                    if (!sunrise || !sunset) {
+                        console.error("Güneş olayları hesaplanamadı");
+                        return;
+                    }
+
+                    // 2. GÜNDÜZ ve GECE SÜRELERİNİ HESAPLA
+                    const dayDuration = (sunset - sunrise) / (1000 * 60 * 60); // saat cinsinden
+                    const nightDuration = 24 - dayDuration;
+
+                    // 3. SEGMENT SÜRELERİNİ HESAPLA
+                    const daySegmentDuration = dayDuration / 12; // 12 gündüz segmenti
+                    const nightSegmentDuration = nightDuration / 12; // 12 gece segmenti
+
+                    // 4. TABLOYU OLUŞTUR
+                    const tableBody = document.getElementById('segments-data');
+                    tableBody.innerHTML = '';
+
+                    // Gündüz segmentleri
+                    for (let i = 1; i <= 12; i++) {
+                        const startHour = sunrise.getHours() + sunrise.getMinutes()/60 + (i-1)*daySegmentDuration;
+                        const endHour = startHour + daySegmentDuration;
+
+                        // Segment ortasındaki zamanı hesapla (konum hesaplamaları için)
+                        const segmentMidHour = startHour + daySegmentDuration/2;
+                        const segmentMidTime = this.formatDecimalTime(segmentMidHour);
+
+                        // Güneş ve Ay konumlarını hesapla
+                        const sunPos = this.calculatePosition('Sun', date, segmentMidTime, lat, lon);
+                        const moonPos = this.calculatePosition('Moon', date, segmentMidTime, lat, lon);
+
+                        const row = document.createElement('tr');
+                        row.className = 'day-segment-row';
+                        row.innerHTML = `
+                            <td>Gündüz ${i}</td>
+                            <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
+                            <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
+                            <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    }
+
+                    // Gece segmentleri
+                    for (let i = 1; i <= 12; i++) {
+                        const startHour = sunset.getHours() + sunset.getMinutes()/60 + (i-1)*nightSegmentDuration;
+                        const endHour = startHour + nightSegmentDuration;
+
+                        // Segment ortasındaki zamanı hesapla (konum hesaplamaları için)
+                        const segmentMidHour = startHour + nightSegmentDuration/2;
+                        const segmentMidTime = this.formatDecimalTime(segmentMidHour);
+
+                        // Güneş ve Ay konumlarını hesapla
+                        const sunPos = this.calculatePosition('Sun', date, segmentMidTime, lat, lon);
+                        const moonPos = this.calculatePosition('Moon', date, segmentMidTime, lat, lon);
+
+                        const row = document.createElement('tr');
+                        row.className = 'night-segment-row';
+                        row.innerHTML = `
+                            <td>Gece ${i}</td>
+                            <td class="segment-time">${this.formatDecimalTime(startHour % 24)} - ${this.formatDecimalTime(endHour % 24)}</td>
+                            <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
+                            <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    }
+                } catch (error) {
+                    console.error("Segment tablosu oluşturma hatası:", error);
+                }
             },
 
             updateAll() {
                 this.updateCelestialTable();
                 this.updateCelestialPositions();
+                this.updateDayNightSegmentsTable();
             }
         };
 
