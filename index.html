@@ -1019,15 +1019,15 @@
                 });
             },
 
-            calculateRiseSet(bodyId, observer, date, direction) {
-                try {
-                    const time = Astronomy.SearchRiseSet(bodyId, observer, direction, date, 300);
-                    return time ? new Date(time) : null;
-                } catch (e) {
-                    console.error(`Error calculating rise/set for ${bodyId}:`, e);
-                    return null;
-                }
-            },
+calculateRiseSet(bodyId, observer, date, direction) {
+    try {
+        const time = Astronomy.SearchRiseSet(bodyId, observer, direction, date, 300);
+        return time ? new Date(time) : null;
+    } catch (e) {
+        console.error(`Doğuş/batış hesaplama hatası (${bodyId}):`, e);
+        return null;
+    }
+},
 
             formatTime(date) {
                 if (!date || typeof date.toLocaleTimeString !== 'function') {
@@ -1036,13 +1036,12 @@
                 return date.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
             },
 
-    formatDecimalTime(decimal) {
-        // Düzeltme: Negatif saatleri önlemek için modüler aritmetik
-        decimal = ((decimal % 24) + 24) % 24;
-        const hours = Math.floor(decimal);
-        const minutes = Math.round((decimal - hours) * 60);
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    },
+formatDecimalTime(decimal) {
+    decimal = ((decimal % 24) + 24) % 24; // 0-24 aralığına getir
+    const hours = Math.floor(decimal);
+    const minutes = Math.round((decimal - hours) * 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+},
 
             updateCelestialPositions() {
                 const date = document.getElementById('date').value;
@@ -1098,96 +1097,98 @@ updateDayNightSegmentsTable() {
     const observer = new Astronomy.Observer(lat, lon, 0);
 
     try {
-        // Mevcut çalışan yöntemi kullanarak doğuş/batış hesapla
-        const datetime = new Date(date + 'T12:00:00Z');
-        const sunrise = this.calculateRiseSet('Sun', observer, datetime, +1);
-        const sunset = this.calculateRiseSet('Sun', observer, datetime, -1);
+        // 1. Doğuş ve batış zamanlarını hesapla
+        const baseDate = new Date(date + 'T12:00:00Z');
+        const sunrise = this.calculateRiseSet('Sun', observer, baseDate, +1);
+        const sunset = this.calculateRiseSet('Sun', observer, baseDate, -1);
 
         if (!sunrise || !sunset) {
             console.error("Güneş olayları hesaplanamadı");
             return;
         }
 
-        // Gündüz ve gece sürelerini hesapla
-        const dayDuration = (sunset - sunrise) / (1000 * 60 * 60);
-        const nightDuration = 24 - dayDuration;
+        // 2. Gündüz ve gece sürelerini kontrol et
+        let dayDuration, nightDuration;
 
-        // Segmentleri oluştur
+        // Normal durum (gündüz ve gece var)
+        if (sunrise < sunset) {
+            dayDuration = (sunset - sunrise) / (1000 * 60 * 60);
+            nightDuration = 24 - dayDuration;
+        }
+        // Gece yarısı güneşi (kutup gündüzü)
+        else if (sunrise > sunset) {
+            dayDuration = 24;
+            nightDuration = 0;
+        }
+        // Güneş hiç doğmazsa (kutup gecesi)
+        else {
+            dayDuration = 0;
+            nightDuration = 24;
+        }
+
+        // 3. Segmentleri oluştur
         const tableBody = document.getElementById('segments-data');
         tableBody.innerHTML = '';
 
-        // Gündüz segmentleri
-        for (let i = 1; i <= 12; i++) {
-            const startHour = sunrise.getHours() + sunrise.getMinutes()/60 + (i-1)*(dayDuration/12);
-            const endHour = startHour + (dayDuration/12);
+        // Gündüz segmentleri (sadece gündüz varsa)
+        if (dayDuration > 0) {
+            const segmentDuration = dayDuration / 12;
+            for (let i = 0; i < 12; i++) {
+                const startHour = (sunrise.getUTCHours() + sunrise.getUTCMinutes()/60 + i*segmentDuration) % 24;
+                const endHour = (startHour + segmentDuration) % 24;
 
-            const segmentMidDate = new Date(sunrise.getTime() + (i-0.5)*(dayDuration/12)*60*60*1000);
-            const sunPos = this.calculatePosition('Sun', date, this.formatTime(segmentMidDate), lat, lon);
-            const moonPos = this.calculatePosition('Moon', date, this.formatTime(segmentMidDate), lat, lon);
+                const segmentMid = new Date(sunrise.getTime() + (i + 0.5)*segmentDuration*60*60*1000);
+                const sunPos = this.calculatePositionAtDate(segmentMid, 'Sun', lat, lon);
+                const moonPos = this.calculatePositionAtDate(segmentMid, 'Moon', lat, lon);
 
-            const row = document.createElement('tr');
-            row.className = 'day-segment-row';
-            row.innerHTML = `
-                <td>Gündüz ${i}</td>
-                <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
-                <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
-                <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
-            `;
-            tableBody.appendChild(row);
+                const row = document.createElement('tr');
+                row.className = 'day-segment-row';
+                row.innerHTML = `
+                    <td>Gündüz ${i+1}</td>
+                    <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
+                    <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
+                    <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            }
         }
 
-        // Gece segmentleri
-        for (let i = 1; i <= 12; i++) {
-            let startHour = sunset.getHours() + sunset.getMinutes()/60 + (i-1)*(nightDuration/12);
-            let endHour = startHour + (nightDuration/12);
+        // Gece segmentleri (sadece gece varsa)
+        if (nightDuration > 0) {
+            const segmentDuration = nightDuration / 12;
+            for (let i = 0; i < 12; i++) {
+                let startHour = (sunset.getUTCHours() + sunset.getUTCMinutes()/60 + i*segmentDuration) % 24;
+                let endHour = (startHour + segmentDuration) % 24;
 
-            // 24 saatlik döngü sağla
-            startHour = startHour % 24;
-            endHour = endHour % 24;
+                const segmentMid = new Date(sunset.getTime() + (i + 0.5)*segmentDuration*60*60*1000);
+                const sunPos = this.calculatePositionAtDate(segmentMid, 'Sun', lat, lon);
+                const moonPos = this.calculatePositionAtDate(segmentMid, 'Moon', lat, lon);
 
-            const segmentMidDate = new Date(sunset.getTime() + (i-0.5)*(nightDuration/12)*60*60*1000);
-            const sunPos = this.calculatePosition('Sun', date, this.formatTime(segmentMidDate), lat, lon);
-            const moonPos = this.calculatePosition('Moon', date, this.formatTime(segmentMidDate), lat, lon);
-
-            const row = document.createElement('tr');
-            row.className = 'night-segment-row';
-            row.innerHTML = `
-                <td>Gece ${i}</td>
-                <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
-                <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
-                <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
-            `;
-            tableBody.appendChild(row);
+                const row = document.createElement('tr');
+                row.className = 'night-segment-row';
+                row.innerHTML = `
+                    <td>Gece ${i+1}</td>
+                    <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
+                    <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
+                    <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            }
         }
 
     } catch (error) {
         console.error("Segment tablosu oluşturma hatası:", error);
         const tableBody = document.getElementById('segments-data');
-        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Hesaplama hatası: ' + error.message + '</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Hesaplama hatası</td></tr>';
     }
 },
 
-calculatePositionAtHour(hour, bodyId, date, lat, lon) {
+calculatePositionAtDate(date, bodyId, lat, lon) {
     try {
-        // Saati doğru formatta oluştur
-        const hours = Math.floor(hour);
-        const minutes = Math.round((hour - hours) * 60);
-        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-        // Tarih ve saati birleştir (UTC zamanı olarak)
-        const datetime = new Date(`${date}T${timeString}:00Z`);
         const observer = new Astronomy.Observer(lat, lon, 0);
-
-        if (celestialBodies.some(b => b.id === bodyId)) {
-            const {ra, dec} = Astronomy.Equator(bodyId, datetime, observer, true, true);
-            const {altitude, azimuth} = Astronomy.Horizon(datetime, observer, ra, dec, 'normal');
-
-            return {
-                altitude,
-                azimuth
-            };
-        }
-        return null;
+        const {ra, dec} = Astronomy.Equator(bodyId, date, observer, true, true);
+        const {altitude, azimuth} = Astronomy.Horizon(date, observer, ra, dec, 'normal');
+        return { altitude, azimuth };
     } catch (e) {
         console.error(`Konum hesaplama hatası (${bodyId}):`, e);
         return null;
