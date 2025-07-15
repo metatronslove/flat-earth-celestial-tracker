@@ -1097,89 +1097,71 @@ updateDayNightSegmentsTable() {
     const observer = new Astronomy.Observer(lat, lon, 0);
 
     try {
-        // 1. Doğuş ve batış zamanlarını hesapla
-        const baseDate = new Date(date + 'T12:00:00Z');
-        const sunrise = this.calculateRiseSet('Sun', observer, baseDate, +1);
-        const sunset = this.calculateRiseSet('Sun', observer, baseDate, -1);
+        // 1. Bugünün doğuş ve batışını hesapla
+        const today = new Date(date + 'T12:00:00Z');
+        const sunriseToday = this.calculateRiseSet('Sun', observer, today, +1);
+        const sunsetToday = this.calculateRiseSet('Sun', observer, today, -1);
 
-        if (!sunrise || !sunset) {
+        // 2. Ertesi günün doğuşunu hesapla
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const sunriseTomorrow = this.calculateRiseSet('Sun', observer, tomorrow, +1);
+
+        if (!sunriseToday || !sunsetToday || !sunriseTomorrow) {
             console.error("Güneş olayları hesaplanamadı");
             return;
         }
 
-        // 2. Gündüz ve gece sürelerini hesapla
-        let dayDuration, nightDuration;
+        // 3. Gerçek gündüz ve gece sürelerini hesapla
+        const dayDuration = (sunsetToday - sunriseToday) / (1000 * 60 * 60); // saat cinsinden
+        const nightDuration = (sunriseTomorrow - sunsetToday) / (1000 * 60 * 60); // saat cinsinden
 
-        if (sunrise < sunset) {
-            // Normal durum: güneş doğar ve batar
-            dayDuration = (sunset - sunrise) / (1000 * 60 * 60); // saat cinsinden
-            nightDuration = 24 - dayDuration;
-        } else if (sunrise > sunset) {
-            // Kutup gündüzü: güneş hiç batmaz
-            dayDuration = 24;
-            nightDuration = 0;
-        } else {
-            // Kutup gecesi: güneş hiç doğmaz
-            dayDuration = 0;
-            nightDuration = 24;
-        }
-
-        // 3. Segment uzunluklarını hesapla
+        // 4. Segment uzunluklarını hesapla
         const daySegmentDuration = dayDuration / 12;
         const nightSegmentDuration = nightDuration / 12;
 
-        // 4. Segmentleri oluştur
+        // 5. Segmentleri oluştur
         const tableBody = document.getElementById('segments-data');
         tableBody.innerHTML = '';
 
-        // Gündüz segmentleri (sadece gündüz varsa)
-        if (dayDuration > 0) {
-            for (let i = 0; i < 12; i++) {
-                const startTime = new Date(sunrise.getTime() + i * daySegmentDuration * 60 * 60 * 1000);
-                const endTime = new Date(startTime.getTime() + daySegmentDuration * 60 * 60 * 1000);
-                const midTime = new Date(startTime.getTime() + (daySegmentDuration * 60 * 60 * 1000) / 2);
+        // Gündüz segmentleri (12 segment)
+        for (let i = 0; i < 12; i++) {
+            const startTime = new Date(sunriseToday.getTime() + i * daySegmentDuration * 60 * 60 * 1000);
+            const endTime = new Date(startTime.getTime() + daySegmentDuration * 60 * 60 * 1000);
+            const midTime = new Date((startTime.getTime() + endTime.getTime()) / 2);
 
-                const startHour = startTime.getUTCHours() + startTime.getUTCMinutes()/60;
-                const endHour = endTime.getUTCHours() + endTime.getUTCMinutes()/60;
+            const sunPos = this.calculatePositionAtDate(midTime, 'Sun', lat, lon);
+            const moonPos = this.calculatePositionAtDate(midTime, 'Moon', lat, lon);
 
-                const sunPos = this.calculatePositionAtDate(midTime, 'Sun', lat, lon);
-                const moonPos = this.calculatePositionAtDate(midTime, 'Moon', lat, lon);
-
-                const row = document.createElement('tr');
-                row.className = 'day-segment-row';
-                row.innerHTML = `
-                    <td>Gündüz ${i+1}</td>
-                    <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
-                    <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
-                    <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
-                `;
-                tableBody.appendChild(row);
-            }
+            const row = document.createElement('tr');
+            row.className = 'day-segment-row';
+            row.innerHTML = `
+                <td>Gündüz ${i+1}</td>
+                <td class="segment-time">${this.formatTime(startTime)} - ${this.formatTime(endTime)}</td>
+                <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
+                <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
+            `;
+            tableBody.appendChild(row);
         }
 
-        // Gece segmentleri (sadece gece varsa)
-        if (nightDuration > 0) {
-            for (let i = 0; i < 12; i++) {
-                const startTime = new Date(sunset.getTime() + i * nightSegmentDuration * 60 * 60 * 1000);
-                const endTime = new Date(startTime.getTime() + nightSegmentDuration * 60 * 60 * 1000);
-                const midTime = new Date(startTime.getTime() + (nightSegmentDuration * 60 * 60 * 1000) / 2);
+        // Gece segmentleri (12 segment)
+        for (let i = 0; i < 12; i++) {
+            const startTime = new Date(sunsetToday.getTime() + i * nightSegmentDuration * 60 * 60 * 1000);
+            const endTime = new Date(startTime.getTime() + nightSegmentDuration * 60 * 60 * 1000);
+            const midTime = new Date((startTime.getTime() + endTime.getTime()) / 2);
 
-                const startHour = startTime.getUTCHours() + startTime.getUTCMinutes()/60;
-                const endHour = endTime.getUTCHours() + endTime.getUTCMinutes()/60;
+            const sunPos = this.calculatePositionAtDate(midTime, 'Sun', lat, lon);
+            const moonPos = this.calculatePositionAtDate(midTime, 'Moon', lat, lon);
 
-                const sunPos = this.calculatePositionAtDate(midTime, 'Sun', lat, lon);
-                const moonPos = this.calculatePositionAtDate(midTime, 'Moon', lat, lon);
-
-                const row = document.createElement('tr');
-                row.className = 'night-segment-row';
-                row.innerHTML = `
-                    <td>Gece ${i+1}</td>
-                    <td class="segment-time">${this.formatDecimalTime(startHour)} - ${this.formatDecimalTime(endHour)}</td>
-                    <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
-                    <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
-                `;
-                tableBody.appendChild(row);
-            }
+            const row = document.createElement('tr');
+            row.className = 'night-segment-row';
+            row.innerHTML = `
+                <td>Gece ${i+1}</td>
+                <td class="segment-time">${this.formatTime(startTime)} - ${this.formatTime(endTime)}</td>
+                <td class="sun-position">${sunPos ? `Yükseklik: ${sunPos.altitude.toFixed(1)}°<br>Açı: ${sunPos.azimuth.toFixed(1)}°` : '-'}</td>
+                <td class="moon-position">${moonPos ? `Yükseklik: ${moonPos.altitude.toFixed(1)}°<br>Açı: ${moonPos.azimuth.toFixed(1)}°` : '-'}</td>
+            `;
+            tableBody.appendChild(row);
         }
 
     } catch (error) {
